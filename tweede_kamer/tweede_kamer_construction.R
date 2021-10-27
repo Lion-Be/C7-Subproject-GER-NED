@@ -14,8 +14,13 @@ library(lme4)      # for multilevel modeling
 library(stargazer) 
 library(MASS)
 library(tikzDevice)
-load("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_preparation2.RData")
-file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R") # execute before continuing
+load("tweede_kamer/data_NED.RData")
+#file.edit("bundestag_weird_proposals_pre.R") # execute before continuing
+
+#' ---------------------------------
+## 0. add amend_lists to amends ----
+#' ---------------------------------
+amends$amend_list <- amend_lists
 
 #' ----------------------------
 ## 1. create action_matrix ----
