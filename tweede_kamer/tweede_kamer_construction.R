@@ -87,7 +87,7 @@ for (row in 1:nrow(amends)) {
       "invoegen", "ingevoegd",
       "toevoegen", "toegevoegd")
   
-  # NEED CLARIFICATION:
+  # NEED CLARIFICATION / FIXES:
   # 1. "vervalt, onder vervanging" (amend_lists[[40]])
   # ein Teil verfällt, ein anderer wird geändert
   # 2. "telkens vervangen" (amend_lists[[502]])
@@ -98,19 +98,29 @@ for (row in 1:nrow(amends)) {
   # 5. "geplaatst" -> hinzugefügt? (amend_lists[[517]])
   # 6. "komt [...] vervallen" -> gestrichen (amend_lists[[1008]])
   # 7. "vervalt telkens" -> verfällt jedes Mal (amend_lists[[1016]])
+  # 8. Artikel ID in name of list_element (amend_lists[[25]])
+  # 9. collapsing within list_element when another layer in list (amend_lists[[23]])
   
   # NOTES:
   # 2x "Article": Article I, Artikel 4; first in roman number; 
   
+  
+  
+  # collapse lines within a list element
+  for(list_el in 1:nrow(action_matrix)){
+    amend_list[list_el] <- str_c(amend_list[list_el][[1]], collapse = " ")
+  }
+
   # remove cited text
-  amend_text <- unlist(amend_list)
-  action_text <- str_replace(amend_text, ",.*ʻ", "")
-  action_text <- str_replace(action_text, "‚.*‘", "")
-  action_text <- str_replace(action_text, ",.*‘", "")
-  action_text <- str_replace(action_text, "‚.*’", "")
-  action_text <- str_replace(action_text, "‘.*’", "")
-  action_text <- str_replace(action_text, "„.*“", "")
-  action_text <- str_replace(action_text, "[(].*[)]", "")
+  amend_text <- unlist(amend_list, use.names = TRUE) 
+  action_text <- str_replace(amend_text, "«.*»", "")
+  #action_text <- str_replace(amend_text, ",.*ʻ", "")
+  #action_text <- str_replace(action_text, "‚.*‘", "")
+  #action_text <- str_replace(action_text, ",.*‘", "")
+  #action_text <- str_replace(action_text, "‚.*’", "")
+  #action_text <- str_replace(action_text, "‘.*’", "")
+  #action_text <- str_replace(action_text, "„.*“", "")
+  #action_text <- str_replace(action_text, "[(].*[)]", "")
   
   # search for action words in each list element
   action_matrix[,"loeschen"] <- F
@@ -132,45 +142,45 @@ for (row in 1:nrow(amends)) {
   
   for (list_el in 1:length(action_text)) {
     
-    # "Artikel 1"
-    if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")) 
+    # "artikel I" // "Artikel I"
+    if (str_detect(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")) 
       action_matrix[list_el,"ref.art"] <- 
-        str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")
+        str_extract(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")
     
     # "Nach Artikel 1 wird Artikel 2 eingefügt" | "Artikel 1 wird Artikel 01 vorangestellt"
-    if (str_count(action_text[list_el], "\\bArtikel\\b") == 2 & (str_detect(action_text[list_el], "Nach\\s|nach\\s") == T | str_detect(action_text[list_el], "voran") == T )) 
-      action_matrix[list_el,"ref.art"] <- 
-        str_extract_all(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\b|\\bArtikel\\s[:digit:]+\\b)")[[1]][1]
+    #if (str_count(action_text[list_el], "\\bArtikel\\b") == 2 & (str_detect(action_text[list_el], "Nach\\s|nach\\s") == T | str_detect(action_text[list_el], "voran") == T )) 
+    #  action_matrix[list_el,"ref.art"] <- 
+    #    str_extract_all(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\b|\\bArtikel\\s[:digit:]+\\b)")[[1]][1]
     
     # "Artikel 1 und Artikel 2"
-    if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\sArtikel\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <-  
-        str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\sArtikel\\s[:digit:]+\\b)")
+    #if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\sArtikel\\s[:digit:]+\\b)")) 
+    #  action_matrix[list_el,"ref.art"] <-  
+    #    str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\sArtikel\\s[:digit:]+\\b)")
     
     # "Artikel 1 und 2"
-    if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
-        str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
+    #if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
+    #  action_matrix[list_el,"ref.art"] <- 
+    #    str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
     
     # Artikel 1, 2 und 3"
-    if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
-        str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
+    #if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
+    #  action_matrix[list_el,"ref.art"] <- 
+    #    str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
     
     # Artikel 1 bis Artikel 3"
-    if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\sArtikel\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
-        str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\sArtikel\\s[:digit:]+\\b)")
+    #if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\sArtikel\\s[:digit:]+\\b)")) 
+    #  action_matrix[list_el,"ref.art"] <- 
+    #    str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\sArtikel\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\sArtikel\\s[:digit:]+\\b)")
     
     # "Artikel 1 bis 3"
-    if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
-        str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")
+    #if (str_detect(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")) 
+    #  action_matrix[list_el,"ref.art"] <- 
+    #    str_extract(action_text[list_el], "(\\b(Artikel|Artikeln)\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|\\b(Artikel|Artikeln)\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")
     
     # Artikel 1 bis 4 und 7
-    if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])|\\bArtikel\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+)")) 
-      action_matrix[list_el,"ref.art"] <-  
-        str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])|\\bArtikel\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+)")
+    #if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])|\\bArtikel\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+)")) 
+    #  action_matrix[list_el,"ref.art"] <-  
+    #    str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])|\\bArtikel\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+)")
     
     
   } # end for loop over action text list elements
