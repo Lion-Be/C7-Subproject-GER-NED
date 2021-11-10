@@ -34,7 +34,7 @@ for (row in 1:nrow(amends)) {
   
   list_dims <- names(unlist(rapply(amends$amend_list[row], length, 
                                    how="list")))
-  action_matrix <- matrix(NA, nrow=length(list_dims), ncol=14)
+  action_matrix <- matrix(NA, nrow=length(list_dims), ncol=14) #attention: added another column for ref.art2
   colnames(action_matrix) <- 
     c("ref.art", "ref.art2", "ref.num", "ref.buch", "ref.buchbuch", 
       "ref.para", "ref.absatz", "ref.satz", "text.spec", "text.cite", 
@@ -100,10 +100,13 @@ for (row in 1:nrow(amends)) {
   # 7. "vervalt telkens" -> verfällt jedes Mal (amend_lists[[1016]])
   # 8. Artikel ID in name of list_element (amend_lists[[25]])
   # 9. collapsing within list_element when another layer in list (amend_lists[[23]]); maybe another loop just a layer beneath?
+  # 10. vervallen de tweede en derde volzin (= zweiter und dritter Satz) (47)
   
   # NOTES:
   # 2x "Article": Article I, Artikel 4; first in roman number; 
-  
+  # een volzin toegevoegd (amend_lists[[25]]) = ein Satz
+  # aan het slot een volzin toegevoegd (37) = am Ende ein Satz
+  # some amendments seem to be duplicates -> unique()? 
   
   
   # collapse lines within a list element
