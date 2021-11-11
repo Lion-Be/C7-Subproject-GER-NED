@@ -57,34 +57,34 @@ for (row in 1:nrow(amends)) {
   loeschen_words <-    
     # translation of german words
     # NOT FINISHED
-    c("streichen", "gestrichen", 
-      "aufheben", "aufgehoben", "aufzuheben", 
-      "löschen", "gelöscht", 
-      "entfallen", "entfällt",
+    #c("streichen", "gestrichen", 
+    #  "aufheben", "aufgehoben", "aufzuheben", 
+    #  "löschen", "gelöscht", 
+    #  "entfallen", "entfällt")
     # words that appear empirically 
-      "vervallen", "vervalt")
+      c("vervallen", "vervalt")
   neufassen_words <-  
     # translation of german words
     # NOT FINISHED
-    c("fassen", "gefasst", 
-      "neufassen", "neugefasst", "neuzufassen", 
-      "Fassung",
-      "ersetzen", "ersetzt",
+    #c("fassen", "gefasst", 
+    #  "neufassen", "neugefasst", "neuzufassen", 
+    #  "Fassung",
+    #  "ersetzen", "ersetzt")
     # words that appear empirically
-      "vervangen", "vervangt", "vervanging",
+      c("vervangen", "vervangt", "vervanging",
       "komen", "komt")
   hinzufuegen_words <- 
     # translation of german words
     # NOT FINISHED
-    c("anfügen", "angefügt", "anzufügen", 
-      "hinzufügen", "hinzugefügt", "hinzuzufügen", 
-      "ergänzen", "ergänzt", 
-      "erweitern", "erweitert",
-      "einfügen", "eingefügt", "einzufügen", 
-      "einschieben", "eingeschoben", "einzuschieben",
-      "voranstellen", "vorangestellt", "voranzustellen",
+    #c("anfügen", "angefügt", "anzufügen", 
+    #  "hinzufügen", "hinzugefügt", "hinzuzufügen", 
+    #  "ergänzen", "ergänzt", 
+    #  "erweitern", "erweitert",
+    #  "einfügen", "eingefügt", "einzufügen", 
+    #  "einschieben", "eingeschoben", "einzuschieben",
+    #  "voranstellen", "vorangestellt", "voranzustellen")
     # words that appear empirically
-      "invoegen", "ingevoegd",
+     c("invoegen", "ingevoegd",
       "toevoegen", "toegevoegd")
   
   # NEED CLARIFICATION / FIXES:
@@ -107,15 +107,20 @@ for (row in 1:nrow(amends)) {
   # een volzin toegevoegd (amend_lists[[25]]) = ein Satz
   # aan het slot een volzin toegevoegd (37) = am Ende ein Satz
   # some amendments seem to be duplicates -> unique()? 
-  
-  
+
+    
+  # paste label of each list element at the beginning of each list element and
   # collapse lines within a list element
+  ## ometimes the introductory sentence including references is only included in the label
+  ## each list element consists of multiple lines
   for(list_el in 1:nrow(action_matrix)){
-    amend_list[list_el] <- str_c(amend_list[list_el][[1]], collapse = " ")
+    amend_list[list_el] <- paste0(labels(amend_list[list_el]), 
+                                  " ", 
+                                  str_c(amend_list[list_el][[1]], collapse = " ")) #Attention: sometimes we need double [[]] around list_el; this needs improvement
   }
 
   # remove cited text
-  amend_text <- unlist(amend_list, use.names = TRUE) 
+  amend_text <- unlist(amend_list) 
   action_text <- str_replace(amend_text, "«.*»", "")
   #action_text <- str_replace(amend_text, ",.*ʻ", "")
   #action_text <- str_replace(action_text, "‚.*‘", "")
@@ -145,15 +150,20 @@ for (row in 1:nrow(amends)) {
   
   for (list_el in 1:length(action_text)) {
     
-    # "Artikel I"
+    # "Artikel I", "Artikel IV"
     if (str_detect(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")) 
       action_matrix[list_el,"ref.art"] <- 
         str_extract(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")
     
-    # "artikel I"
+    # "artikel I", "artikel IV"
     if (str_detect(action_text[list_el], "(\\bartikel\\s[MDCLXVI]+[:lower:]\\b|\\bartikel\\s[MDCLXVI]+\\b)")) 
       action_matrix[list_el,"ref.art"] <- 
         str_extract(action_text[list_el], "(\\bartikel\\s[MDCLXVI]+[:lower:]\\b|\\bartikel\\s[MDCLXVI]+\\b)")
+    
+    # "artikelen I tot en met III" 
+    if (str_detect(action_text[list_el], "(\\bartikelen\\s[MDCLXVI]+\\stot\\sen\\smet\\s[MDCLXVI]+\\b)")) 
+      action_matrix[list_el,"ref.art"] <- 
+        str_extract(action_text[list_el], "(\\bartikelen\\s[MDCLXVI]+\\stot\\sen\\smet\\s[MDCLXVI]+\\b)")
     
     # ATTENTION: NOT FINISHED; LOOK FOR FURTHER MUTATIONS
     
@@ -165,15 +175,32 @@ for (row in 1:nrow(amends)) {
   ## 1.3.1 identify article (numeric) ----
   # --------------------------------------
   
-  # "artikel 1"
-  if (str_detect(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art"] <- 
-    str_extract(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")
+  for (list_el in 1:length(action_text)) {
   
-  # "Artikel 44"
+  # "artikel 1", "artikel 1a"
+  if (str_detect(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")) 
+    action_matrix[list_el,"ref.art2"] <- 
+      str_extract(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")
+  
+  # "Artikel 44", "Artikel 44a"
   if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art"] <- 
-    str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")
+    action_matrix[list_el,"ref.art2"] <- 
+      str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")
+  
+  # "artikel 8.9", "artikel 3.92b", "artikel 4:2" 
+  if (str_detect(action_text[list_el], "(\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")) 
+    action_matrix[list_el,"ref.art2"] <- 
+      str_extract(action_text[list_el], "(\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")
+  
+  # "Artikel 8.9", "Artikel 3.92b", "Artikel 4:2" 
+  if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")) 
+    action_matrix[list_el,"ref.art2"] <- 
+      str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\Aartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")
+  
+  
+  } # end for loop over action text list elements
+  
+  
   
   # ATTENTION: NOT FINISHED; LOOK FOR FURTHER MUTATIONS
   
@@ -194,8 +221,6 @@ for (row in 1:nrow(amends)) {
     if (str_count(action_text[list_el], "\\bNummer\\b") == 2 & (str_detect(action_text[list_el], "Nach|nach") == T | str_detect(action_text[list_el], "voran") == T ))  
       action_matrix[list_el,"ref.num"] <- 
         str_extract_all(action_text[list_el], "\\bNummer\\s[:digit:]+\\b")[[1]][1]
-    
-    
     
     # "Nummer 1 und Nummer 2"
     if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]\\sund\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")) 
