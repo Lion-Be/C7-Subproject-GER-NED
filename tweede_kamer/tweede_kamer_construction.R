@@ -72,7 +72,7 @@ for (row in 1:nrow(amends)) {
     #  "ersetzen", "ersetzt")
     # words that appear empirically
       c("vervangen", "vervangt", "vervanging",
-      "komen", "komt")
+      "komen", "te luiden")
   hinzufuegen_words <- 
     # translation of german words
     # NOT FINISHED
@@ -85,7 +85,7 @@ for (row in 1:nrow(amends)) {
     #  "voranstellen", "vorangestellt", "voranzustellen")
     # words that appear empirically
      c("invoegen", "ingevoegd",
-      "toevoegen", "toegevoegd")
+      "toevoegen", "toegevoegd", "geplaatst")
   
   # NEED CLARIFICATION / FIXES:
   # 1. "vervalt, onder vervanging" (amend_lists[[40]])
@@ -101,24 +101,50 @@ for (row in 1:nrow(amends)) {
   # 8. Artikel ID in name of list_element (amend_lists[[25]])
   # 9. collapsing within list_element when another layer in list (amend_lists[[23]]); maybe another loop just a layer beneath?
   # 10. vervallen de tweede en derde volzin (= zweiter und dritter Satz) (47)
+  # 11. 2x onderdeel (148,154,170,...) -> difference between capital and lower letters?
+  # 12. 2x roman article (169)
+  # 13. "onder a" / "onder b" -> onderdeel a/b? (173,174)
   
   # NOTES:
   # 2x "Article": Article I, Artikel 4; first in roman number; 
   # een volzin toegevoegd (amend_lists[[25]]) = ein Satz
   # aan het slot een volzin toegevoegd (37) = am Ende ein Satz
   # some amendments seem to be duplicates -> unique()? 
-
-    
-  # paste label of each list element at the beginning of each list element and
-  # collapse lines within a list element
-  ## ometimes the introductory sentence including references is only included in the label
-  ## each list element consists of multiple lines
+  
+  
+  # --------------------------------------------------------
+  ## collapse lines and keep label of each list element ----
+  # --------------------------------------------------------
+  
+  # sometimes the introductory sentence of the amendment (including article references) is only in the label
+  # sometimes list elements are further nested within another element
+  # each list element consists of multiple lines
+  # ---- this seems to  work for now but is certainly not the most straightforward solution
+  
+  # function to reduce nested structure
+  flattenlist <- function(x){  
+    morelists <- sapply(x, function(xprime) class(xprime)[1]=="list")
+    out <- c(x[!morelists], unlist(x[morelists], recursive=FALSE))
+    if(sum(morelists)){ 
+      Recall(out)
+    }else{
+      return(out)
+    }
+  }
+  
+  # apply function
+  amend_list <- flattenlist(amend_list)
+  
+  # loop over each list element:
+  # paste label of list element at the beginning of each list element and collapse lines within a list element
+  # ---- this may lead to duplicated references but this should not be a problem (I guess)
   for(list_el in 1:nrow(action_matrix)){
     amend_list[list_el] <- paste0(labels(amend_list[list_el]), 
-                                  " ", 
-                                  str_c(amend_list[list_el][[1]], collapse = " ")) #Attention: sometimes we need double [[]] around list_el; this needs improvement
+                            " ", 
+                            str_c(amend_list[list_el][[1]], collapse = " "))
   }
-
+    
+  
   # remove cited text
   amend_text <- unlist(amend_list) 
   action_text <- str_replace(amend_text, "«.*»", "")
@@ -197,7 +223,6 @@ for (row in 1:nrow(amends)) {
     action_matrix[list_el,"ref.art2"] <- 
       str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\Aartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")
   
-  
   } # end for loop over action text list elements
   
   
@@ -206,54 +231,26 @@ for (row in 1:nrow(amends)) {
   
   
   
-  # -------------------------
-  ## 1.4 identify Nummer ----
-  # -------------------------
+  # ----------------------------
+  ## 1.4 identify Onderdeel ----
+  # ----------------------------
   
   for (list_el in 1:length(action_text)) {
     
-    # "Nummer 1"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)")) 
+    # "onderdeel A", "Onderdeel A", "onderdeel Ee"
+    if (str_detect(action_text[list_el], "\\b(onderdeel|Onderdeel)\\s[:alpha:]+")) 
       action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")
+        str_extract(action_text[list_el], "\\b(onderdeel|Onderdeel)\\s[:alpha:]+")
     
-    # "Nach Nummer 1 wird Nummer 2 eingefügt" | "Nummer 1 wird Nummer 01 vorangestellt"
-    if (str_count(action_text[list_el], "\\bNummer\\b") == 2 & (str_detect(action_text[list_el], "Nach|nach") == T | str_detect(action_text[list_el], "voran") == T ))  
-      action_matrix[list_el,"ref.num"] <- 
-        str_extract_all(action_text[list_el], "\\bNummer\\s[:digit:]+\\b")[[1]][1]
-    
-    # "Nummer 1 und Nummer 2"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]\\sund\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")) 
+    # "Onderdelen a en b" | "onderdelen a en b" | "onderdelen A en B"
+    if (str_detect(action_text[list_el], "\\b(onderdelen|Onderdelen)\\s[:alpha:]\\en\\s[:alpha:]+")) 
       action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sund\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")
-    
-    # "Nummer 1 und 2"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]\\sund\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sund\\s[:digit:]+")
-    
-    # "Nummer 1, 2 und 3"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:],\\s[:digit:](,)\\sund\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+,\\s[:digit:](,)\\sund\\s[:digit:]+")
-    
-    # "Nummer 1 bis Nummer 3"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]\\sbis\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sbis\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+")
-    
-    # "Nummer 1 bis 3"
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]\\sbis\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sbis\\s[:digit:]+")
-    
-    # Nummer(n) 1 bis 4 und 7
-    if (str_detect(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
-        str_extract(action_text[list_el], "\\b(Nummer|Nummern|Nr.|Ziffer|Ziffern)\\s[:digit:]+\\sbis\\s[:digit:]+\\sund\\s[:digit:]+")
-    
+        str_extract(action_text[list_el], "\\b(onderdelen|Onderdelen)\\s[:alpha:]\\en\\s[:alpha:]+")
     
   } # end for loop over action text list elements
+  
+  
+  # ATTENTION: NOT FINISHED; LOOK FOR FURTHER MUTATIONS
   
   
   # ----------------------------
@@ -389,7 +386,7 @@ for (row in 1:nrow(amends)) {
   
   
   # --------------------------------------
-  ## 1.8 identify absatz -----------------
+  ## 1.8 identify lid -----------------
   # --------------------------------------
   
   for (list_el in 1:length(action_text)) {
