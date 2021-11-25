@@ -55,36 +55,12 @@ for (row in 1:nrow(amends)) {
   ## 1.2 identify function activation ----
   # --------------------------------------
   loeschen_words <-    
-    # translation of german words
-    # NOT FINISHED
-    #c("streichen", "gestrichen", 
-    #  "aufheben", "aufgehoben", "aufzuheben", 
-    #  "löschen", "gelöscht", 
-    #  "entfallen", "entfällt")
-    # words that appear empirically 
-      c("vervallen", "vervalt")
+      c("vervallen", "vervalt") # look for further mutations or translation of german words
   neufassen_words <-  
-    # translation of german words
-    # NOT FINISHED
-    #c("fassen", "gefasst", 
-    #  "neufassen", "neugefasst", "neuzufassen", 
-    #  "Fassung",
-    #  "ersetzen", "ersetzt")
-    # words that appear empirically
-      c("vervangen", "vervangt", "vervanging",
+      c("vervangen", "vervangt", "vervanging", # look for further mutations or translation of german words
       "komen", "te luiden")
   hinzufuegen_words <- 
-    # translation of german words
-    # NOT FINISHED
-    #c("anfügen", "angefügt", "anzufügen", 
-    #  "hinzufügen", "hinzugefügt", "hinzuzufügen", 
-    #  "ergänzen", "ergänzt", 
-    #  "erweitern", "erweitert",
-    #  "einfügen", "eingefügt", "einzufügen", 
-    #  "einschieben", "eingeschoben", "einzuschieben",
-    #  "voranstellen", "vorangestellt", "voranzustellen")
-    # words that appear empirically
-     c("invoegen", "ingevoegd",
+     c("invoegen", "ingevoegd", # look for further mutations or translation of german words
       "toevoegen", "toegevoegd", "geplaatst")
   
   # NEED CLARIFICATION / FIXES:
@@ -110,13 +86,14 @@ for (row in 1:nrow(amends)) {
   # een volzin toegevoegd (amend_lists[[25]]) = ein Satz
   # aan het slot een volzin toegevoegd (37) = am Ende ein Satz
   # some amendments seem to be duplicates -> unique()? 
+  # eerste lid in action_matrix = lid 1? 
   
   
   # --------------------------------------------------------
   ## collapse lines and keep label of each list element ----
   # --------------------------------------------------------
   
-  # sometimes the introductory sentence of the amendment (including article references) is only in the label
+  # sometimes the introductory sentence of the amendment (including article references) is only included in the label
   # sometimes list elements are further nested within another element
   # each list element consists of multiple lines
   # ---- this seems to  work for now but is certainly not the most straightforward solution
@@ -137,7 +114,7 @@ for (row in 1:nrow(amends)) {
   
   # loop over each list element:
   # paste label of list element at the beginning of each list element and collapse lines within a list element
-  # ---- this may lead to duplicated references but this should not be a problem (I guess)
+  # ---- this may lead to duplicated references (if introductory sentence is included both in the label and article) but this should not be a problem (I guess)
   for(list_el in 1:nrow(action_matrix)){
     amend_list[list_el] <- paste0(labels(amend_list[list_el]), 
                             " ", 
@@ -146,15 +123,20 @@ for (row in 1:nrow(amends)) {
     
   
   # remove cited text
+  ## new text not always in parentheses
+  ## most often solely referenced trough ':', but we cannot remove everything after ':', because
+  ## sometimes there are two introductory sentences ("artikel 1 gewijzigd als volgt: in het zesde lid...")
+  
+  # To-Do:
+  ## "onder vernummering van ..." needs to be implemented
+  ## do we have multiple changes after basic introductory sentence ("gewijzigd")? -> probably not, because action_matrix wouldn't work
+  
   amend_text <- unlist(amend_list) 
   action_text <- str_replace(amend_text, "«.*»", "")
-  #action_text <- str_replace(amend_text, ",.*ʻ", "")
-  #action_text <- str_replace(action_text, "‚.*‘", "")
-  #action_text <- str_replace(action_text, ",.*‘", "")
-  #action_text <- str_replace(action_text, "‚.*’", "")
-  #action_text <- str_replace(action_text, "‘.*’", "")
-  #action_text <- str_replace(action_text, "„.*“", "")
-  #action_text <- str_replace(action_text, "[(].*[)]", "")
+  action_text <- str_replace(action_text, "\\bvervangen\\sdoor\\:.*", "vervangen door")
+  action_text <- str_replace(action_text, "\\bluidende\\:.*", "luidende")
+  action_text <- str_replace(action_text, "\\bte\\sluiden\\:.*", "te luiden")
+  
   
   # search for action words in each list element
   action_matrix[,"loeschen"] <- F
@@ -225,8 +207,6 @@ for (row in 1:nrow(amends)) {
   
   } # end for loop over action text list elements
   
-  
-  
   # ATTENTION: NOT FINISHED; LOOK FOR FURTHER MUTATIONS
   
   
@@ -236,6 +216,11 @@ for (row in 1:nrow(amends)) {
   # ----------------------------
   
   for (list_el in 1:length(action_text)) {
+    
+    # "vierde onderdeel"
+    if (str_detect(action_text[list_el], "[:alpha:]+\\s(onderdeel|Onderdeel)")) 
+      action_matrix[list_el,"ref.num"] <-  
+        str_extract(action_text[list_el], "[:alpha:]+\\s(onderdeel|Onderdeel)")
     
     # "onderdeel A", "Onderdeel A", "onderdeel Ee"
     if (str_detect(action_text[list_el], "\\b(onderdeel|Onderdeel)\\s[:alpha:]+")) 
@@ -254,56 +239,30 @@ for (row in 1:nrow(amends)) {
   
   
   # ----------------------------
-  ## 1.5 identify Buchstabe ----
+  ## 1.5 identify Punt ---------
   # ----------------------------
   
   for (list_el in 1:length(action_text)) {
     
-    if (str_detect(action_text[list_el], "\\s[:lower:][)]\\s")) 
+    # "eerste punt", "tweede punt", ...
+    if (str_detect(action_text[list_el], "[:alpha:]+\\spunt")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\s[:lower:][)]\\s")
+        str_extract(action_text[list_el], "[:alpha:]+\\spunt")
     
-    # "Buchstabe a"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)")) 
+    # "punt 4"
+    if (str_detect(action_text[list_el], "\\bpunt\\s[:digit:]+")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]")
+        str_extract(action_text[list_el], "\\bpunt\\s[:digit:]+")
     
-    # "Nach Buchstabe a wird Buchstabe b eingefügt" | "Buchstabe a wird Buchstabe b vorangestellt"
-    if (str_count(action_text[list_el], "\\bBuchstabe\\b") == 2 & (str_detect(action_text[list_el], "Nach|nach") == T | str_detect(action_text[list_el], "voran") == T ))  
-      action_matrix[list_el,"ref.buch"] <- 
-        str_extract_all(action_text[list_el], "\\bBuchstabe\\s[:lower:]\\b")[[1]][1]
-    
-    # "Buchstabe a und Buchstabe b"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sund\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]")) 
-      action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sund\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]")
-    
-    # "Buchstabe a und b"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sund\\s[:lower:]\\s")) 
-      action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sund\\s[:lower:]\\s")
-    
-    # "Buchstabe a, b und c"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:],\\s[:lower:]\\sund\\s[:lower:]\\s")) 
-      action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:],\\s[:lower:]\\sund\\s[:lower:]\\s")
-    
-    # "Buchstabe a bis Buchstabe c"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sbis\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]")) 
-      action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sbis\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]")
-    
-    # "Buchstabe a bis c"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sbis\\s[:lower:]\\s")) 
-      action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.)\\s[:lower:]\\sbis\\s[:lower:]\\s")
+    # "punt twee"
+    # probably, we have to rely on explicit versions of either "punt twee" (etc.) or "eerste punt" (etc.);
     
     
   } # end for loop over action text list elements
   
   
   # --------------------------------------
-  ## 1.6 identify Buchstabe/Buchstabe ----
+  ## 1.6 identify Buchstabe/Buchstabe ----s
   # --------------------------------------
   
   for (list_el in 1:length(action_text)) {
@@ -386,56 +345,39 @@ for (row in 1:nrow(amends)) {
   
   
   # --------------------------------------
-  ## 1.8 identify lid -----------------
+  ## 1.8 identify lid --------------------
   # --------------------------------------
   
   for (list_el in 1:length(action_text)) {
     
-    # Referenz: "Absatz 1 und Absatz 2"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]\\sund\\b(Absatz|Abs.)\\s[:digit:]+")) 
+    # Referenz: "eerste lid", "tweede lid", "derde lid", ...
+    if (str_detect(action_text[list_el], "[:alpha:]+\\slid\\b")) 
       action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]+\\sund\\b(Absatz|Abs.)\\s[:digit:]+")
+        str_extract(action_text[list_el], "[:alpha:]+\\slid\\b")
     
-    # Referenz: "Absatz 1 und 2"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]\\sund\\s[:digit:]+")) 
+    # Referenz: "eerste lid (nieuw)", "tweede lid (nieuw)", "derde lid (nieuw)", ...
+    if (str_detect(action_text[list_el], "[:alpha:]+\\slid\\s\\(nieuw\\)")) 
       action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]+\\sund\\s[:digit:]+")
+        str_extract(action_text[list_el], "[:alpha:]+\\slid\\s\\(nieuw\\)")
     
-    # Referenz: "Absätze 1 und 2"
-    if (str_detect(action_text[list_el], "\\b(Absätze|Abs.)\\s[:digit:]\\sund\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-    
-        str_extract(action_text[list_el], "\\b(Absätze|Abs.)\\s[:digit:]+\\sund\\s[:digit:]+")
-    
-    # Referenz: "Absatz 1, 2 und 3"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:],\\s[:digit:]\\sund\\s[:digit:]+")) 
+    # Referenz: "lid 1", "lid 2", ...
+    if (str_detect(action_text[list_el], "\\blid\\s[:digit:]+")) 
       action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]+,\\s[:digit:]\\sund\\s[:digit:]+")
+        str_extract(action_text[list_el], "\\blid\\s[:digit:]+")
     
-    # Referenz: "Absätze 1, 2 und 3"
-    if (str_detect(action_text[list_el], "\\b(Absätze(n)|Abs.)\\s[:digit:],\\s[:digit:]\\sund\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absätze(n)|Abs.)\\s[:digit:]+,\\s[:digit:]\\sund\\s[:digit:]+")
+    # Referenz: "tweede tot en met achtste lid"
+    if (str_detect(action_text[list_el], "[:alpha:]+\\stot\\sen\\smet\\s[:alpha:]+\\slid\\b")) 
+      action_matrix[list_el,"ref.absatz"] <- 
+        str_extract(action_text[list_el], "[:alpha:]+\\stot\\sen\\smet\\s[:alpha:]+\\slid\\b")
     
-    # Referenz: "Absatz 1 bis Absatz 3"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]\\sbis\\b(Absatz|Abs.)\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]+\\sbis\\b(Absatz|Abs.)\\s[:digit:]+")
+    # Referenz: "negende tot tiende lid"
+    if (str_detect(action_text[list_el], "[:alpha:]+\\stot\\s[:alpha:]+\\slid\\b")) 
+      action_matrix[list_el,"ref.absatz"] <- 
+        str_extract(action_text[list_el], "[:alpha:]+\\stot\\s[:alpha:]+\\slid\\b")
     
-    # Referenz: "Absatz 1 bis 3"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]\\sbis\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-    
-        str_extract(action_text[list_el], "\\b(Absatz|Abs.)\\s[:digit:]+\\sbis\\s[:digit:]+")
     
-    # Referenz: "Absätze 1 bis 3"
-    if (str_detect(action_text[list_el], "\\b(Absätze|Abs.)\\s[:digit:]\\sbis\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absätze|Abs.)\\s[:digit:]+\\sbis\\s[:digit:]+")
     
-    # Referenz: "Absatz 1"
-    if (str_detect(action_text[list_el], "\\b(Absatz|Abs[:punct:])")) 
-      action_matrix[list_el,"ref.absatz"] <-   
-        str_extract(action_text[list_el], "\\b(Absatz|Abs[:punct:])\\s[:digit:]+")
-    
+  # LOOK FOR FURTHER MUTATIONS
     
   } # end for loop over action text list elements
   
