@@ -245,7 +245,7 @@ for (row in 1:nrow(amends)) {
   for (list_el in 1:length(action_text)) {
     
     # "eerste punt", "tweede punt", ...
-    if (str_detect(action_text[list_el], "[:alpha:]+\\spunt")) 
+    if (str_detect(action_text[list_el], "[:alpha:]+\\spunt")) # check whether this rather general expression causes trouble
       action_matrix[list_el,"ref.buch"] <-  
         str_extract(action_text[list_el], "[:alpha:]+\\spunt")
     
@@ -254,8 +254,67 @@ for (row in 1:nrow(amends)) {
       action_matrix[list_el,"ref.buch"] <-  
         str_extract(action_text[list_el], "\\bpunt\\s[:digit:]+")
     
+    ## we have to rely on explicit versions of either "punt twee" (etc.) or "eerste punt" (etc.);
+    # "punt een"
+    if (str_detect(action_text[list_el], "\\bpunt\\seen")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\seen")
+    
     # "punt twee"
-    # probably, we have to rely on explicit versions of either "punt twee" (etc.) or "eerste punt" (etc.);
+    if (str_detect(action_text[list_el], "\\bpunt\\stwee")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\stwee")
+    
+    # "punt drie"
+    if (str_detect(action_text[list_el], "\\bpunt\\sdrie")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\sdrie")
+    
+    # "punt vier"
+    if (str_detect(action_text[list_el], "\\bpunt\\svier")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\svier")
+    
+    # "punt vijf"
+    if (str_detect(action_text[list_el], "\\bpunt\\svijf")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\svijf")
+    
+    # "punt zes"
+    if (str_detect(action_text[list_el], "\\bpunt\\szes")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\szes")
+    
+    # "punt zeven"
+    if (str_detect(action_text[list_el], "\\bpunt\\szeven")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\szeven")
+    
+    # "punt acht"
+    if (str_detect(action_text[list_el], "\\bpunt\\sacht")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\sacht")
+    
+    # "punt negen"
+    if (str_detect(action_text[list_el], "\\bpunt\\snegen")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\snegen")
+    
+    # "punt tien"
+    if (str_detect(action_text[list_el], "\\bpunt\\stien")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\stien")
+    
+    # "punt elf"
+    if (str_detect(action_text[list_el], "\\bpunt\\self")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\self")
+    
+    # "punt twaalf"
+    if (str_detect(action_text[list_el], "\\bpunt\\stwaalf")) 
+      action_matrix[list_el,"ref.buch"] <-  
+        str_extract(action_text[list_el], "\\bpunt\\stwaalf")
+    
     
     
   } # end for loop over action text list elements
