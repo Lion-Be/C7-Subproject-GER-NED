@@ -2,7 +2,7 @@
 # Counterfactual Bill Proposals
 # Tweede Kamer
 # Bill construction
-# Lion Behrens
+# Lion Behrens & Felix Münchow
 # -------------------------------
 
 # packages and data
@@ -99,7 +99,7 @@ for (row in 1:nrow(amends)) {
   # ---- this seems to  work for now but is certainly not the most straightforward solution
   
   # function to reduce nested structure
-  flattenlist <- function(x){  
+  flattenlist <- function(x){
     morelists <- sapply(x, function(xprime) class(xprime)[1]=="list")
     out <- c(x[!morelists], unlist(x[morelists], recursive=FALSE))
     if(sum(morelists)){ 
@@ -114,11 +114,22 @@ for (row in 1:nrow(amends)) {
   
   # loop over each list element:
   # paste label of list element at the beginning of each list element and collapse lines within a list element
-  # ---- this may lead to duplicated references (if introductory sentence is included both in the label and article) but this should not be a problem (I guess)
+  # duplicated introductory sentences may be a problem when identifying text.cite and text.spec
+  
   for(list_el in 1:nrow(action_matrix)){
-    amend_list[list_el] <- paste0(labels(amend_list[list_el]), 
-                            " ", 
-                            str_c(amend_list[list_el][[1]], collapse = " "))
+    
+    # if first line of list is not equal to label, paste label
+    if(amend_list[list_el][[1]][1] != labels(amend_list[list_el])){
+      amend_list[list_el] <- paste0(labels(amend_list[list_el]), 
+                                    " ", 
+                                    str_c(amend_list[list_el][[1]], collapse = " "))
+      }
+    
+    # if first line of list equal, do not paste label 
+    if(amend_list[list_el][[1]][1] == labels(amend_list[list_el])){
+      amend_list[list_el] <- paste0(str_c(amend_list[list_el][[1]], collapse = " "))
+      }
+    
   }
     
   
@@ -131,7 +142,7 @@ for (row in 1:nrow(amends)) {
   ## "onder vernummering van ..." needs to be implemented
   ## do we have multiple changes after basic introductory sentence ("gewijzigd")? -> probably not, because action_matrix wouldn't work
   
-  amend_text <- unlist(amend_list) 
+  amend_text <- unlist(amend_list)
   action_text <- str_replace(amend_text, "«.*»", "")
   action_text <- str_replace(action_text, "\\bvervangen\\sdoor\\:.*", "vervangen door")
   action_text <- str_replace(action_text, "\\bluidende\\:.*", "luidende")
@@ -245,75 +256,75 @@ for (row in 1:nrow(amends)) {
   for (list_el in 1:length(action_text)) {
     
     # "eerste punt", "tweede punt", ...
-    if (str_detect(action_text[list_el], "[:alpha:]+\\spunt")) # check whether this rather general expression causes trouble
+    if (str_detect(action_text[list_el], "[:alpha:]+\\s(punt|Punt)")) # check whether this rather general expression causes trouble
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "[:alpha:]+\\spunt")
+        str_extract(action_text[list_el], "[:alpha:]+\\s(punt|Punt)")
     
     # "punt 4"
-    if (str_detect(action_text[list_el], "\\bpunt\\s[:digit:]+")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\s[:digit:]+")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\s[:digit:]+")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\s[:digit:]+")
     
     ## we have to rely on explicit versions of either "punt twee" (etc.) or "eerste punt" (etc.);
     # "punt een"
-    if (str_detect(action_text[list_el], "\\bpunt\\seen")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\seen")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\seen")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\seen")
     
     # "punt twee"
-    if (str_detect(action_text[list_el], "\\bpunt\\stwee")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stwee")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\stwee")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\stwee")
     
     # "punt drie"
-    if (str_detect(action_text[list_el], "\\bpunt\\sdrie")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\sdrie")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\sdrie")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\sdrie")
     
     # "punt vier"
-    if (str_detect(action_text[list_el], "\\bpunt\\svier")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\svier")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\svier")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\svier")
     
     # "punt vijf"
-    if (str_detect(action_text[list_el], "\\bpunt\\svijf")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\svijf")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\svijf")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\svijf")
     
     # "punt zes"
-    if (str_detect(action_text[list_el], "\\bpunt\\szes")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\szes")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\szes")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\szes")
     
     # "punt zeven"
-    if (str_detect(action_text[list_el], "\\bpunt\\szeven")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\szeven")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\szeven")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\szeven")
     
     # "punt acht"
-    if (str_detect(action_text[list_el], "\\bpunt\\sacht")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\sacht")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\sacht")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\sacht")
     
     # "punt negen"
-    if (str_detect(action_text[list_el], "\\bpunt\\snegen")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\snegen")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\snegen")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\snegen")
     
     # "punt tien"
-    if (str_detect(action_text[list_el], "\\bpunt\\stien")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stien")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\stien")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\stien")
     
     # "punt elf"
-    if (str_detect(action_text[list_el], "\\bpunt\\self")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\self")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\self")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\self")
     
     # "punt twaalf"
-    if (str_detect(action_text[list_el], "\\bpunt\\stwaalf")) 
+    if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stwaalf")) 
       action_matrix[list_el,"ref.buch"] <-  
-        str_extract(action_text[list_el], "\\bpunt\\stwaalf")
+        str_extract(action_text[list_el], "\\b(punt|Punt)\\stwaalf")
     
     
     
@@ -494,6 +505,8 @@ for (row in 1:nrow(amends)) {
     
   } # end for loop over action text list elements
   
+
+  # does text.spec appear in other forms? 
   
   #' -------------------------------------------
   ## 1.10 identify text.spec -------------------
@@ -501,24 +514,15 @@ for (row in 1:nrow(amends)) {
   amend_list <- unlist(amend_list)
   for (list_el in 1:length(action_text)) {
     
-    if(str_detect(amend_list[list_el], "(Wort|Worte|Worten|Wörter|Wörtern|Satz|Angabe|Angaben)\\s(‚|,|‘|‘‘|„)")) {
+    if(str_detect(amend_list[list_el], "(wordt|door|luidende|luiden)\\s(«|:)")) {
       
-      if(lengths(rm_between(amend_list[list_el], "‚", "‘", extract = T)) == 2)
-        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "‚", "‘", extract = T)[[1]][1]
-      
-      if(lengths(rm_between(amend_list[list_el], "‚", "‘", extract = T)) == 2)
-        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "‚", "‘", extract = T)[[1]][1]
-      
-      if(lengths(rm_between(amend_list[list_el], "‘‘", "‘‘", extract = T)) == 2)
-        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "‘‘", "‘‘", extract = T)[[1]][1]
-      
-      if(lengths(rm_between(amend_list[list_el], "„", "“", extract = T)) == 2)
-        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "„", "“", extract = T)[[1]][1]
+      if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 2)
+        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][1]
       
     }
     
   } # end for loop over action text list elements
-  
+
   
   #' --------------------------------------
   ## 1.11 identify text.cite -------------
@@ -526,71 +530,34 @@ for (row in 1:nrow(amends)) {
   amend_list <- unlist(amend_list)
   for (list_el in 1:length(action_text)) {
     
-    # attention: this "," is a genuine quotation mark
-    if(str_detect(amend_list[list_el], "‚")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "‚", "‘", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "‚", "‘", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=‚).*(?=‘)")[[1]][1]
-      )
-      amend_list[list_el] <- rm_between(amend_list[list_el], "‚", "‘")
+    # version 1: if both references are marked by "«[...]»"
+    if(str_detect(amend_list[list_el], "(«|»)")) {
+      if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 2){
+        action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][2]
+      }
+
+      amend_list[list_el] <- rm_between(amend_list[list_el], "«", "»")
     }
     
-    # attention: this "," is just a comma, needs to go after
-    if(str_detect(amend_list[list_el], ",")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "‚", "‘", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], ",", "‘", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=,).*(?=‘)")[[1]][1]
-      )                                                                             
-      amend_list[list_el] <- rm_between(amend_list[list_el], ",", "‘")
+    # version 2: text.cite is referenced by "luidende: [...]"
+    if(str_detect(amend_list[list_el], "luidende\\s?\\:")) {
+             action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=luidende\\s?\\:\\s?).*"))
     }
     
     
-    
-    # attention: this "," is a genuine quotation mark
-    if(str_detect(amend_list[list_el], "‚")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "‚", "’", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "‚", "’", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=‚).*(?=’)")[[1]][1]
-      )
-      amend_list[list_el] <- rm_between(amend_list[list_el], "‚", "’")
-    }
-    
-    # attention: this "," is just a comma, needs to go after
-    if(str_detect(amend_list[list_el], ",")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "‚", "’", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], ",", "’", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=,).*(?=’)")[[1]][1]
-      )                                                                             
-      amend_list[list_el] <- rm_between(amend_list[list_el], ",", "’")
+    # version 3: text.cite is referenced by "luidende: [...]"
+    if(str_detect(amend_list[list_el], "luiden\\s?\\:")) {
+      action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=luiden\\s?\\:\\s?).*"))
     }
     
     
-    
-    
-    if(str_detect(amend_list[list_el], "ʻ")) {
-      ifelse(lengths(rm_between(amend_list[list_el], ",", "ʻ", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], ",", "ʻ", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=,).*(?=ʻ)")[[1]][1]
-      )                                                                             
-      amend_list[list_el] <- rm_between(amend_list[list_el], ",", "ʻ")
+    # version 4: text.cite is referenced by "luidende: [...]"
+    if(str_detect(amend_list[list_el], "vervangen\\sdoor\\s?\\:")) {
+      action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=vervangen\\sdoor\\s?\\:\\s?).*"))
     }
     
+    # ATTENTION: THIS MAY LEAD TO PROBLEMS IF TWO WORDS APPEAR IN ONE ELEMENT AS IN amends$amend_list[[9]]
     
-    if(str_detect(amend_list[list_el], "‘‘")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "‘‘", "‘‘", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "‘‘", "‘‘", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=‘‘).*(?<=‘‘)")[[1]][1]
-      )
-      amend_list[list_el] <- rm_between(amend_list[list_el], "‘‘", "‘‘")
-    }
-    
-    if(str_detect(amend_list[list_el], "„")) {
-      ifelse(lengths(rm_between(amend_list[list_el], "„", "“", extract = T)) == 2,
-             action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "„", "“", extract = T)[[1]][2], 
-             action_matrix[list_el, "text.cite"] <- str_extract(amend_list[list_el], "(?<=„).*(?<=“)")[[1]][1]
-      )
-      amend_list[list_el] <- rm_between(amend_list[list_el], "„", "“")
-    }
     
   } # end for loop over action text list elements
   
