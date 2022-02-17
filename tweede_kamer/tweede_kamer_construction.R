@@ -514,12 +514,12 @@ for (row in 1:nrow(amends)) {
   amend_list <- unlist(amend_list)
   for (list_el in 1:length(action_text)) {
     
-    if(str_detect(amend_list[list_el], "(wordt|door|luidende|luiden)\\s(«|:)")) {
+    if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 1)
+      action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][1]
+    
+    if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 2)
+      action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][1]
       
-      if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 2)
-        action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][1]
-      
-    }
     
   } # end for loop over action text list elements
 
@@ -540,6 +540,7 @@ for (row in 1:nrow(amends)) {
     }
     
     # version 2: text.cite is referenced by "luidende: [...]"
+    if(str_detect(amend_list[list_el],))
     if(str_detect(amend_list[list_el], "luidende\\s?\\:")) {
              action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=luidende\\s?\\:\\s?).*"))
     }
@@ -556,8 +557,13 @@ for (row in 1:nrow(amends)) {
       action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=vervangen\\sdoor\\s?\\:\\s?).*"))
     }
     
-    # ATTENTION: THIS MAY LEAD TO PROBLEMS IF TWO WORDS APPEAR IN ONE ELEMENT AS IN amends$amend_list[[9]]
     
+    # version 5: two or more words that reference text.cite appear in element
+    # if more than word appears, use the first one
+    if(lengths(str_extract_all(amend_list[list_el], "luiden\\s?\\:|vervangen\\sdoor\\s?\\:|luidende\\s?\\:")) >= 2){
+      action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=vervangen\\sdoor\\s?\\:\\s?).*|(?<=luiden\\s?\\:\\s?).*|(?<=luidende\\s?\\:\\s?).*"))
+    }
+       
     
   } # end for loop over action text list elements
   
@@ -569,9 +575,13 @@ for (row in 1:nrow(amends)) {
   
   for (list_el in 1:length(action_text)) {
     
-    action_matrix[list_el, "header"] <- str_detect(action_text[list_el], "(Überschrift|überschrift)") 
+    action_matrix[list_el, "header"] <- str_detect(action_text[list_el], "(Aanhef|aanhef)") 
     
   }
+  
+  
+  
+  
   
   
   #' --------------------------------------
