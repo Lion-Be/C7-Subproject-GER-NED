@@ -362,6 +362,10 @@ for (row in 1:100) {
       action_matrix[list_el,"ref.lid"] <- 
         str_extract(action_text[list_el], "[:alpha:]+\\stot\\s[:alpha:]+\\slid\\b")
     
+    # Referenz: "negende lid tot tiende lid"
+    if (str_detect(action_text[list_el], "(eerste|tweede|derde|vierde|vijfde|zesde|zevende|achtste|negende|tiende)+\\slid\\stot\\s[:alpha:]+\\slid\\b")) 
+      action_matrix[list_el,"ref.lid"] <- 
+        str_extract(action_text[list_el], "(eerste|tweede|derde|vierde|vijfde|zesde|zevende|achtste|negende|tiende)+\\slid\\stot\\s[:alpha:]+\\slid\\b")
     
     
   # LOOK FOR FURTHER MUTATIONS
@@ -510,7 +514,7 @@ for (row in 1:100) {
   
   
   #' --------------------------------------
-  ## 1.13 fill up action_matrix ----------
+  ## 1.14 fill up action_matrix ----------
   #' --------------------------------------
   
   if (nrow(action_matrix) > 1) {  
@@ -548,32 +552,67 @@ for (row in 1:100) {
   #' ------------------------------------------------------------------
   ## 1.14 make action_matrix compatible with function input ----------
   #' ------------------------------------------------------------------
-  action_matrix[,"ref.art_rom"] <- gsub("(Artikeln|Artikel|Art[.])", "", action_matrix[,"ref.art_rom"])
+  action_matrix[,"ref.art_rom"] <- gsub("(Artikel|artikel|artikelen)", "", action_matrix[,"ref.art_rom"])
   action_matrix[,"ref.art_rom"] <- gsub(" ", "", action_matrix[,"ref.art_rom"])
-  action_matrix[,"ref.ond"] <- gsub("(Nummern|Nummer|Nr[.]|Nr)", "", action_matrix[,"ref.ond"])
+  action_matrix[,"ref.art_num"] <- gsub("(Artikel|artikel|artikelen)", "", action_matrix[,"ref.art_num"])
+  action_matrix[,"ref.art_num"] <- gsub(" ", "", action_matrix[,"ref.art_num"])
+  action_matrix[,"ref.ond"] <- gsub("(Onderdeel|onderdeel|onderdelen)", "", action_matrix[,"ref.ond"])
   action_matrix[,"ref.ond"] <- gsub(" ", "", action_matrix[,"ref.ond"])
-  action_matrix[,"ref.punt"] <- gsub("(Buchstaben|Buchstabe|Buchst[.]|[)])", "", action_matrix[,"ref.punt"])
+  action_matrix[,"ref.punt"] <- gsub("(Punt|punt)", "", action_matrix[,"ref.punt"])
   action_matrix[,"ref.punt"] <- gsub(" ", "", action_matrix[,"ref.punt"])
-  action_matrix[,"ref.lid"] <- gsub("(Absätzen|Absätze|Absatz|Abs[.])", "", action_matrix[,"ref.lid"])
+  action_matrix[,"ref.lid"] <- gsub("(Lid|lid)", "", action_matrix[,"ref.lid"])
   action_matrix[,"ref.lid"] <- gsub(" ", "", action_matrix[,"ref.lid"])
-  action_matrix[,"ref.satz"] <- gsub("(Sätzen|Sätze|Satz)", "", action_matrix[,"ref.satz"])
-  action_matrix[,"ref.satz"] <- gsub(" ", "", action_matrix[,"ref.satz"])
+  #action_matrix[,"ref.satz"] <- gsub("(Sätzen|Sätze|Satz)", "", action_matrix[,"ref.satz"])
+  #action_matrix[,"ref.satz"] <- gsub(" ", "", action_matrix[,"ref.satz"])
+  
+  # replace alphabeticall spelled out numbers ("eerste|twee") with digits
+  for (var in c("ref.punt", "ref.lid")) {
+    
+  action_matrix[, var] <- gsub("eerste", "1", action_matrix[, var])
+  action_matrix[, var] <- gsub("tweede", "2", action_matrix[, var])
+  action_matrix[, var] <- gsub("derde", "3", action_matrix[, var])
+  action_matrix[, var] <- gsub("vierde", "4", action_matrix[, var])
+  action_matrix[, var] <- gsub("vijfde", "5", action_matrix[, var])
+  action_matrix[, var] <- gsub("zesde", "6", action_matrix[, var])
+  action_matrix[, var] <- gsub("zevende", "7", action_matrix[, var])
+  action_matrix[, var] <- gsub("achtste", "8", action_matrix[, var])
+  action_matrix[, var] <- gsub("negende", "9", action_matrix[, var])
+  action_matrix[, var] <- gsub("tiende", "10", action_matrix[, var])
+  action_matrix[, var] <- gsub("elfde", "11", action_matrix[, var])
+  action_matrix[, var] <- gsub("twaalfde", "12", action_matrix[, var])
+  action_matrix[, var] <- gsub("dertiende", "13", action_matrix[, var])
+
+  action_matrix[, var] <- gsub("een", "1", action_matrix[, var])
+  action_matrix[, var] <- gsub("twee", "2", action_matrix[, var])
+  action_matrix[, var] <- gsub("drie", "3", action_matrix[, var])
+  action_matrix[, var] <- gsub("vier", "4", action_matrix[, var])
+  action_matrix[, var] <- gsub("vijf", "5", action_matrix[, var])
+  action_matrix[, var] <- gsub("zes", "6", action_matrix[, var])
+  action_matrix[, var] <- gsub("zeven", "7", action_matrix[, var])
+  action_matrix[, var] <- gsub("acht", "8", action_matrix[, var])
+  action_matrix[, var] <- gsub("negen", "9", action_matrix[, var])
+  action_matrix[, var] <- gsub("tien", "10", action_matrix[, var])
+  action_matrix[, var] <- gsub("elf", "11", action_matrix[, var])
+  action_matrix[, var] <- gsub("twaalf", "12", action_matrix[, var])
+
+  }
+  
   
   for (i in 1:nrow(action_matrix)) {
     
     if (action_matrix[i, "neufassen"] == T)
       next
     
-    for (var in c("ref.art_rom", "ref.ond")) {
+    for (var in c("ref.art_rom", "ref.lid")) {
       
-      elements <- str_extract_all(action_matrix[i, var], "[:digit:]+")
+      elements <- str_extract_all(action_matrix[i, var], "[:digit:]+|[:upper:]+")
       
       # just one mention
       if (lengths(elements) == 1)
         action_matrix[i, var] <- gsub(" ", "", elements)
       
       # two mentions
-      if (!is.na(action_matrix[i, var]) & str_detect(action_matrix[i, var], "und")) {
+      if (!is.na(action_matrix[i, var]) & str_detect(action_matrix[i, var], "en")) {
         action_matrix <- rbind(action_matrix[1:i,], action_matrix[i:nrow(action_matrix),])
         
         action_matrix[i, var] <- elements[[1]][1]
@@ -584,7 +623,7 @@ for (row in 1:100) {
       } # end if
       
       # more than two mentions
-      if (!is.na(action_matrix[i, var]) & str_detect(action_matrix[i, var], "bis")) {
+      if (!is.na(action_matrix[i, var]) & str_detect(action_matrix[i, var], "tot en met")) {
         nr <- as.numeric(elements[[1]][2]) - as.numeric(elements[[1]][1])
         
         action_matrix <- rbind(action_matrix[1:i,], 
@@ -603,7 +642,7 @@ for (row in 1:100) {
   
   
   
-  amends$action_matrix[row] <- list(action_matrix)  
+  amends$action_matrix[row] <- list(action_matrix)
 } # end for loop over all amendments 1.2
 file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_post.R") # execute before continuing
 
@@ -665,7 +704,7 @@ for (row in 1:nrow(amends)) {
       ## 2.0 special case: whole bill is re-written  ---------------
       #' -----------------------------------------------------------
       
-      if (sum(is.na(action_matrix[matrix_row, 1:8])) == 8 & action_matrix[matrix_row, "neufassen"] == T) {
+      if (sum(is.na(action_matrix[matrix_row, 1:6])) == 6 & action_matrix[matrix_row, "neufassen"] == T) {
         amends$artikel_list_hypo[row][[1]] <- action_matrix[matrix_row, "text.cite"]
         next
       }
