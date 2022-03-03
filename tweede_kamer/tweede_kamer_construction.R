@@ -34,17 +34,17 @@ for (row in 1:nrow(amends)) {
   
   list_dims <- names(unlist(rapply(amends$amend_list[row], length, 
                                    how="list")))
-  action_matrix <- matrix(NA, nrow=length(list_dims), ncol=14) #attention: added another column for ref.art2
+  action_matrix <- matrix(NA, nrow=length(list_dims), ncol=13) #attention: added another column for ref.art_num
   colnames(action_matrix) <- 
-    c("ref.art", "ref.art2", "ref.num", "ref.buch", "ref.buchbuch", 
-      "ref.para", "ref.absatz", "ref.satz", "text.spec", "text.cite", 
-      "header", "loeschen", "neufassen", "hinzufuegen")
+    c("ref.art_rom", "ref.art_num", "ref.ond", "ref.punt", 
+      "ref.lid", "ref.satz", "text.spec", "text.cite", 
+      "aanhef", "considerans", "loeschen", "neufassen", "hinzufuegen")
   amends$action_matrix[row] <- list(action_matrix)
   
 } 
 
 # here: begin for()-loop over all amendments
-for (row in 1:nrow(amends)) {
+for (row in 1:100) {
   # row <- 1
   
   # define objects to work with in specific row
@@ -171,17 +171,17 @@ for (row in 1:nrow(amends)) {
     
     # "Artikel I", "Artikel IV"
     if (str_detect(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
+      action_matrix[list_el,"ref.art_rom"] <- 
         str_extract(action_text[list_el], "(\\bArtikel\\s[MDCLXVI]+[:lower:]\\b|\\bArtikel\\s[MDCLXVI]+\\b)")
     
     # "artikel I", "artikel IV"
     if (str_detect(action_text[list_el], "(\\bartikel\\s[MDCLXVI]+[:lower:]\\b|\\bartikel\\s[MDCLXVI]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
+      action_matrix[list_el,"ref.art_rom"] <- 
         str_extract(action_text[list_el], "(\\bartikel\\s[MDCLXVI]+[:lower:]\\b|\\bartikel\\s[MDCLXVI]+\\b)")
     
     # "artikelen I tot en met III" 
     if (str_detect(action_text[list_el], "(\\bartikelen\\s[MDCLXVI]+\\stot\\sen\\smet\\s[MDCLXVI]+\\b)")) 
-      action_matrix[list_el,"ref.art"] <- 
+      action_matrix[list_el,"ref.art_rom"] <- 
         str_extract(action_text[list_el], "(\\bartikelen\\s[MDCLXVI]+\\stot\\sen\\smet\\s[MDCLXVI]+\\b)")
     
     # ATTENTION: NOT FINISHED; LOOK FOR FURTHER MUTATIONS
@@ -198,22 +198,22 @@ for (row in 1:nrow(amends)) {
   
   # "artikel 1", "artikel 1a"
   if (str_detect(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art2"] <- 
+    action_matrix[list_el,"ref.art_num"] <- 
       str_extract(action_text[list_el], "(\\bartikel\\s[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+\\b)")
   
   # "Artikel 44", "Artikel 44a"
   if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art2"] <- 
+    action_matrix[list_el,"ref.art_num"] <- 
       str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+\\b)")
   
   # "artikel 8.9", "artikel 3.92b", "artikel 4:2" 
   if (str_detect(action_text[list_el], "(\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art2"] <- 
+    action_matrix[list_el,"ref.art_num"] <- 
       str_extract(action_text[list_el], "(\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")
   
   # "Artikel 8.9", "Artikel 3.92b", "Artikel 4:2" 
   if (str_detect(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")) 
-    action_matrix[list_el,"ref.art2"] <- 
+    action_matrix[list_el,"ref.art_num"] <- 
       str_extract(action_text[list_el], "(\\bArtikel\\s[:digit:]+[:punct:]+[:digit:]+[:lower:]\\b|\\Aartikel\\s[:digit:]+[:punct:]+[:digit:]+\\b)")
   
   } # end for loop over action text list elements
@@ -230,17 +230,17 @@ for (row in 1:nrow(amends)) {
     
     # "vierde onderdeel"
     if (str_detect(action_text[list_el], "[:alpha:]+\\s(onderdeel|Onderdeel)")) 
-      action_matrix[list_el,"ref.num"] <-  
+      action_matrix[list_el,"ref.ond"] <-  
         str_extract(action_text[list_el], "[:alpha:]+\\s(onderdeel|Onderdeel)")
     
     # "onderdeel A", "Onderdeel A", "onderdeel Ee"
     if (str_detect(action_text[list_el], "\\b(onderdeel|Onderdeel)\\s[:alpha:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
+      action_matrix[list_el,"ref.ond"] <-  
         str_extract(action_text[list_el], "\\b(onderdeel|Onderdeel)\\s[:alpha:]+")
     
     # "Onderdelen a en b" | "onderdelen a en b" | "onderdelen A en B"
     if (str_detect(action_text[list_el], "\\b(onderdelen|Onderdelen)\\s[:alpha:]\\en\\s[:alpha:]+")) 
-      action_matrix[list_el,"ref.num"] <-  
+      action_matrix[list_el,"ref.ond"] <-  
         str_extract(action_text[list_el], "\\b(onderdelen|Onderdelen)\\s[:alpha:]\\en\\s[:alpha:]+")
     
   } # end for loop over action text list elements
@@ -257,159 +257,76 @@ for (row in 1:nrow(amends)) {
     
     # "eerste punt", "tweede punt", ...
     if (str_detect(action_text[list_el], "[:alpha:]+\\s(punt|Punt)")) # check whether this rather general expression causes trouble
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "[:alpha:]+\\s(punt|Punt)")
     
     # "punt 4"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\s[:digit:]+")
     
     ## we have to rely on explicit versions of either "punt twee" (etc.) or "eerste punt" (etc.);
     # "punt een"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\seen")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\seen")
     
     # "punt twee"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stwee")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\stwee")
     
     # "punt drie"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\sdrie")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\sdrie")
     
     # "punt vier"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\svier")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\svier")
     
     # "punt vijf"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\svijf")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\svijf")
     
     # "punt zes"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\szes")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\szes")
     
     # "punt zeven"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\szeven")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\szeven")
     
     # "punt acht"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\sacht")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\sacht")
     
     # "punt negen"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\snegen")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\snegen")
     
     # "punt tien"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stien")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\stien")
     
     # "punt elf"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\self")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\self")
     
     # "punt twaalf"
     if (str_detect(action_text[list_el], "\\b(punt|Punt)\\stwaalf")) 
-      action_matrix[list_el,"ref.buch"] <-  
+      action_matrix[list_el,"ref.punt"] <-  
         str_extract(action_text[list_el], "\\b(punt|Punt)\\stwaalf")
     
     
-    
-  } # end for loop over action text list elements
-  
-  
-  # --------------------------------------
-  ## 1.6 identify Buchstabe/Buchstabe ----s
-  # --------------------------------------
-  
-  for (list_el in 1:length(action_text)) {
-    
-    # "Buchstabe aa"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")
-    
-    # "Nach Buchstabe aa wird Buchstabe bb eingefügt" | "Buchstabe aa wird Buchstabe bb vorangestellt"
-    if (str_count(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\b") == 2 & (str_detect(action_text[list_el], "Nach|nach") == T | str_detect(action_text[list_el], "voran") == T ))  
-      action_matrix[list_el,"ref.buchbuch"] <- 
-        str_extract_all(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\b")[[1]][1]
-    
-    # "Buchstabe aa und Buchstabe bb"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sund\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sund\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")
-    
-    # "Buchstabe aa und bb"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sund\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-   
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sund\\s[:lower:][:lower:]")
-    
-    # "Buchstabe aa, bb und cc"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:],\\s[:lower:][:lower:]\\sund\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:],\\s[:lower:][:lower:]\\sund\\s[:lower:][:lower:]")
-    
-    # "Buchstabe aa bis Buchstabe cc"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sbis\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sbis\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]")
-    
-    # "Buchstabe aa bis cc"
-    if (str_detect(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sbis\\s[:lower:][:lower:]")) 
-      action_matrix[list_el,"ref.buchbuch"] <-  
-        str_extract(action_text[list_el], "\\b(Buchstabe|Buchstaben|Buchst.|Doppelbuchstabe)\\s[:lower:][:lower:]\\sbis\\s[:lower:][:lower:]")
-    
-  } # end for loop over action text list elements
-  
-  
-  # --------------------------------------
-  ## 1.7 identify paragraph --------------
-  # --------------------------------------
-  
-  for (list_el in 1:length(action_text)) {
-    
-    # Referenz: "§ 1"
-    if (str_detect(action_text[list_el], "([§]\\s[:digit:]+([:lower:])\\b)|((^|\\s)[§]\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-  
-        str_extract(action_text[list_el], "([§]\\s[:digit:]+([:lower:])\\b)|((^|\\s)[§]\\s[:digit:]+\\b)")
-    
-    # Referenz: "§ 1 und § 2"
-    if (str_detect(action_text[list_el], "((^|\\s)[§]\\s[:digit:]+([:lower:])\\sund\\s[§]\\s[:digit:]+([:lower:])\\b|(^|\\s)[§]\\s[:digit:]+\\sund\\s[§]\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-   
-        str_extract(action_text[list_el], "((^|\\s)[§]\\s[:digit:]+([:lower:])\\sund\\s[§]\\s[:digit:]+([:lower:])\\b|(^|\\s)[§]\\s[:digit:]+\\sund\\s[§]\\s[:digit:]+\\b)")
-    
-    # Referenz: "§§ 1 und 2"
-    if (str_detect(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-  
-        str_extract(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
-    
-    # Referenz: "§§ 1, 2 und 3"
-    if (str_detect(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-  
-        str_extract(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:]),\\s[:digit:]+([:lower:])\\sund\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+,\\s[:digit:]+\\sund\\s[:digit:]+\\b)")
-    
-    # Referenz: "§ 1 bis § 3"
-    if (str_detect(action_text[list_el], "((^|\\s)[§]\\s[:digit:]+([:lower:])\\sbis\\s[§]\\s[:digit:]+([:lower:])\\b|(^|\\s)[§]\\s[:digit:]+\\sbis\\s[§]\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-  
-        str_extract(action_text[list_el], "((^|\\s)[§]\\s[:digit:]+([:lower:])\\sbis\\s[§]\\s[:digit:]+([:lower:])\\b|(^|\\s)[§]\\s[:digit:]+\\sbis\\s[§]\\s[:digit:]+\\b)")
-    
-    # Referenz: "§§ 1 bis 3"
-    if (str_detect(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")) 
-      action_matrix[list_el,"ref.para"] <-  
-        str_extract(action_text[list_el], "((^|\\s)[§][§]\\s[:digit:]+([:lower:])\\sbis\\s[:digit:]+([:lower:])\\b|(^|\\s)[§][§]\\s[:digit:]+\\sbis\\s[:digit:]+\\b)")
     
   } # end for loop over action text list elements
   
@@ -422,27 +339,27 @@ for (row in 1:nrow(amends)) {
     
     # Referenz: "eerste lid", "tweede lid", "derde lid", ...
     if (str_detect(action_text[list_el], "[:alpha:]+\\slid\\b")) 
-      action_matrix[list_el,"ref.absatz"] <-   
+      action_matrix[list_el,"ref.lid"] <-   
         str_extract(action_text[list_el], "[:alpha:]+\\slid\\b")
     
     # Referenz: "eerste lid (nieuw)", "tweede lid (nieuw)", "derde lid (nieuw)", ...
     if (str_detect(action_text[list_el], "[:alpha:]+\\slid\\s\\(nieuw\\)")) 
-      action_matrix[list_el,"ref.absatz"] <-   
+      action_matrix[list_el,"ref.lid"] <-   
         str_extract(action_text[list_el], "[:alpha:]+\\slid\\s\\(nieuw\\)")
     
     # Referenz: "lid 1", "lid 2", ...
     if (str_detect(action_text[list_el], "\\blid\\s[:digit:]+")) 
-      action_matrix[list_el,"ref.absatz"] <-   
+      action_matrix[list_el,"ref.lid"] <-   
         str_extract(action_text[list_el], "\\blid\\s[:digit:]+")
     
     # Referenz: "tweede tot en met achtste lid"
     if (str_detect(action_text[list_el], "[:alpha:]+\\stot\\sen\\smet\\s[:alpha:]+\\slid\\b")) 
-      action_matrix[list_el,"ref.absatz"] <- 
+      action_matrix[list_el,"ref.lid"] <- 
         str_extract(action_text[list_el], "[:alpha:]+\\stot\\sen\\smet\\s[:alpha:]+\\slid\\b")
     
     # Referenz: "negende tot tiende lid"
     if (str_detect(action_text[list_el], "[:alpha:]+\\stot\\s[:alpha:]+\\slid\\b")) 
-      action_matrix[list_el,"ref.absatz"] <- 
+      action_matrix[list_el,"ref.lid"] <- 
         str_extract(action_text[list_el], "[:alpha:]+\\stot\\s[:alpha:]+\\slid\\b")
     
     
@@ -540,7 +457,6 @@ for (row in 1:nrow(amends)) {
     }
     
     # version 2: text.cite is referenced by "luidende: [...]"
-    if(str_detect(amend_list[list_el],))
     if(str_detect(amend_list[list_el], "luidende\\s?\\:")) {
              action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=luidende\\s?\\:\\s?).*"))
     }
@@ -569,17 +485,26 @@ for (row in 1:nrow(amends)) {
   
   
   #' --------------------------------
-  ## 1.12 identify header ----------
+  ## 1.12 identify aanhef ----------
   #' --------------------------------
-  # should change happen to law or article header?
+  # should change happen to law or article aanhef?
   
   for (list_el in 1:length(action_text)) {
     
-    action_matrix[list_el, "header"] <- str_detect(action_text[list_el], "(Aanhef|aanhef)") 
+    action_matrix[list_el, "aanhef"] <- str_detect(action_text[list_el], "(Aanhef|aanhef)") 
     
   }
   
+  #' --------------------------------
+  ## 1.13 identify considerans ----------
+  #' --------------------------------
+  # should change happen to law or article aanhef?
   
+  for (list_el in 1:length(action_text)) {
+    
+    action_matrix[list_el, "considerans"] <- str_detect(action_text[list_el], "(Considerans|considerans)") 
+    
+  }
   
   
   
@@ -590,39 +515,30 @@ for (row in 1:nrow(amends)) {
   
   if (nrow(action_matrix) > 1) {  
     
-    # ref.art
+    # ref.art_rom
     for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.art"])[i] == T)
-        action_matrix[i,"ref.art"] <- action_matrix[i-1,"ref.art"]
+      if(is.na(action_matrix[,"ref.art_rom"])[i] == T)
+        action_matrix[i,"ref.art_rom"] <- action_matrix[i-1,"ref.art_rom"]
     }  
-    # ref.num
+    # ref.ond
     for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.num"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]))
-        action_matrix[i,"ref.num"] <- action_matrix[i-1,"ref.num"]
+      if(is.na(action_matrix[,"ref.ond"])[i] == T & identical(action_matrix[i,"ref.art_rom"], action_matrix[i-1,"ref.art_rom"]))
+        action_matrix[i,"ref.ond"] <- action_matrix[i-1,"ref.ond"]
     }
-    # ref.buch
+    # ref.punt
     for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.buch"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]) & identical(action_matrix[i,"ref.num"], action_matrix[i-1,"ref.num"]))
-        action_matrix[i,"ref.buch"] <- action_matrix[i-1,"ref.buch"]
+      if(is.na(action_matrix[,"ref.punt"])[i] == T & identical(action_matrix[i,"ref.art_rom"], action_matrix[i-1,"ref.art_rom"]) & identical(action_matrix[i,"ref.ond"], action_matrix[i-1,"ref.ond"]))
+        action_matrix[i,"ref.punt"] <- action_matrix[i-1,"ref.punt"]
     }  
-    # ref.buchbuch 
+    
+    # ref.lid
     for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.buchbuch"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]) & identical(action_matrix[i,"ref.num"], action_matrix[i-1,"ref.num"]) & identical(action_matrix[i,"ref.buch"], action_matrix[i-1,"ref.buch"]))
-        action_matrix[i,"ref.buchbuch"] <- action_matrix[i-1,"ref.buchbuch"]
-    } 
-    # ref.para
-    for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.para"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]) & identical(action_matrix[i,"ref.num"], action_matrix[i-1,"ref.num"]) & identical(action_matrix[i,"ref.buch"], action_matrix[i-1,"ref.buch"]) & identical(action_matrix[i,"ref.buchbuch"], action_matrix[i-1,"ref.buchbuch"]))
-        action_matrix[i,"ref.para"] <- action_matrix[i-1,"ref.para"]
-    } 
-    # ref.absatz
-    for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.absatz"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]) & identical(action_matrix[i,"ref.num"], action_matrix[i-1,"ref.num"]) & identical(action_matrix[i,"ref.buch"], action_matrix[i-1,"ref.buch"]) & identical(action_matrix[i,"ref.buchbuch"], action_matrix[i-1,"ref.buchbuch"]) & identical(action_matrix[i,"ref.para"], action_matrix[i-1,"ref.para"]))
-        action_matrix[i,"ref.absatz"] <- action_matrix[i-1,"ref.absatz"]
+      if(is.na(action_matrix[,"ref.lid"])[i] == T & identical(action_matrix[i,"ref.art_rom"], action_matrix[i-1,"ref.art_rom"]) & identical(action_matrix[i,"ref.ond"], action_matrix[i-1,"ref.ond"]) & identical(action_matrix[i,"ref.punt"], action_matrix[i-1,"ref.punt"]))
+        action_matrix[i,"ref.lid"] <- action_matrix[i-1,"ref.lid"]
     } 
     # ref.satz
     for (i in 2:nrow(action_matrix)){
-      if(is.na(action_matrix[,"ref.satz"])[i] == T & identical(action_matrix[i,"ref.art"], action_matrix[i-1,"ref.art"]) & identical(action_matrix[i,"ref.num"], action_matrix[i-1,"ref.num"]) & identical(action_matrix[i,"ref.buch"], action_matrix[i-1,"ref.buch"]) & identical(action_matrix[i,"ref.buchbuch"], action_matrix[i-1,"ref.buchbuch"]) & identical(action_matrix[i,"ref.para"], action_matrix[i-1,"ref.para"]) & identical(action_matrix[i,"ref.absatz"], action_matrix[i-1,"ref.absatz"]))
+      if(is.na(action_matrix[,"ref.satz"])[i] == T & identical(action_matrix[i,"ref.art_rom"], action_matrix[i-1,"ref.art_rom"]) & identical(action_matrix[i,"ref.ond"], action_matrix[i-1,"ref.ond"]) & identical(action_matrix[i,"ref.punt"], action_matrix[i-1,"ref.punt"]) & identical(action_matrix[i,"ref.lid"], action_matrix[i-1,"ref.lid"]))
         action_matrix[i,"ref.satz"] <- action_matrix[i-1,"ref.satz"]
     } 
     
@@ -632,18 +548,14 @@ for (row in 1:nrow(amends)) {
   #' ------------------------------------------------------------------
   ## 1.14 make action_matrix compatible with function input ----------
   #' ------------------------------------------------------------------
-  action_matrix[,"ref.art"] <- gsub("(Artikeln|Artikel|Art[.])", "", action_matrix[,"ref.art"])
-  action_matrix[,"ref.art"] <- gsub(" ", "", action_matrix[,"ref.art"])
-  action_matrix[,"ref.num"] <- gsub("(Nummern|Nummer|Nr[.]|Nr)", "", action_matrix[,"ref.num"])
-  action_matrix[,"ref.num"] <- gsub(" ", "", action_matrix[,"ref.num"])
-  action_matrix[,"ref.buch"] <- gsub("(Buchstaben|Buchstabe|Buchst[.]|[)])", "", action_matrix[,"ref.buch"])
-  action_matrix[,"ref.buch"] <- gsub(" ", "", action_matrix[,"ref.buch"])
-  action_matrix[,"ref.buchbuch"] <- gsub("(Doppelbuchstaben|Doppelbuchstabe|Buchstaben|Buchstabe|Buchst[.])", "", action_matrix[,"ref.buchbuch"])
-  action_matrix[,"ref.buchbuch"] <- gsub(" ", "", action_matrix[,"ref.buchbuch"])
-  action_matrix[,"ref.para"] <- gsub("(Paragraphen|Paragraph|Par[.]|[§§]|[§])", "", action_matrix[,"ref.para"])
-  action_matrix[,"ref.para"] <- gsub(" ", "", action_matrix[,"ref.para"])
-  action_matrix[,"ref.absatz"] <- gsub("(Absätzen|Absätze|Absatz|Abs[.])", "", action_matrix[,"ref.absatz"])
-  action_matrix[,"ref.absatz"] <- gsub(" ", "", action_matrix[,"ref.absatz"])
+  action_matrix[,"ref.art_rom"] <- gsub("(Artikeln|Artikel|Art[.])", "", action_matrix[,"ref.art_rom"])
+  action_matrix[,"ref.art_rom"] <- gsub(" ", "", action_matrix[,"ref.art_rom"])
+  action_matrix[,"ref.ond"] <- gsub("(Nummern|Nummer|Nr[.]|Nr)", "", action_matrix[,"ref.ond"])
+  action_matrix[,"ref.ond"] <- gsub(" ", "", action_matrix[,"ref.ond"])
+  action_matrix[,"ref.punt"] <- gsub("(Buchstaben|Buchstabe|Buchst[.]|[)])", "", action_matrix[,"ref.punt"])
+  action_matrix[,"ref.punt"] <- gsub(" ", "", action_matrix[,"ref.punt"])
+  action_matrix[,"ref.lid"] <- gsub("(Absätzen|Absätze|Absatz|Abs[.])", "", action_matrix[,"ref.lid"])
+  action_matrix[,"ref.lid"] <- gsub(" ", "", action_matrix[,"ref.lid"])
   action_matrix[,"ref.satz"] <- gsub("(Sätzen|Sätze|Satz)", "", action_matrix[,"ref.satz"])
   action_matrix[,"ref.satz"] <- gsub(" ", "", action_matrix[,"ref.satz"])
   
@@ -652,7 +564,7 @@ for (row in 1:nrow(amends)) {
     if (action_matrix[i, "neufassen"] == T)
       next
     
-    for (var in c("ref.art", "ref.num")) {
+    for (var in c("ref.art_rom", "ref.ond")) {
       
       elements <- str_extract_all(action_matrix[i, var], "[:digit:]+")
       
@@ -739,7 +651,7 @@ for (row in 1:nrow(amends)) {
   
   tryCatch({
     action_matrix <- amends$action_matrix[[row]]
-    bills_row <- which(bills$Drucksache == amends$idDrucksacheLegis[row])
+    bills_row <- which(bills$bill_id == amends$bill_reference[row])
     amends$artikel_list_hypo[row] <- bills$artikel_list[bills_row]
   }, error = function(e) { errors[row] <<- str_c("row=", row, " matrix_row=none")}) 
   
@@ -766,20 +678,20 @@ for (row in 1:nrow(amends)) {
       
       if (action_matrix[matrix_row, "hinzufuegen"] == T) {
         
-        if(is.na(action_matrix[matrix_row, "ref.art"])) {
+        if(is.na(action_matrix[matrix_row, "ref.art_rom"])) {
           art.length <- 1
         }
         
-        if(!is.na(action_matrix[matrix_row, "ref.art"])) {
-          ref.art <- as.numeric(action_matrix[matrix_row, "ref.art"])
-          length_command <- str_c("art.length <- length(amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art"], ")")
+        if(!is.na(action_matrix[matrix_row, "ref.art_rom"])) {
+          ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
+          length_command <- str_c("art.length <- length(amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"], ")")
           eval(parse(text=length_command))
         }
         
-        ifelse(is.na(action_matrix[matrix_row, "ref.art"]), 
+        ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
                command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
                                 "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
-               command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art"],
+               command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
                                 "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'") 
         )
         
@@ -793,18 +705,14 @@ for (row in 1:nrow(amends)) {
       #' ------------------------
       if (action_matrix[matrix_row, "loeschen"] == T | action_matrix[matrix_row, "neufassen"] == T) { 
         
-        if(is.na(action_matrix[matrix_row, "ref.art"]))
-          action_matrix[matrix_row, "ref.art"] <- "NA"
-        if(is.na(action_matrix[matrix_row, "ref.num"]))
-          action_matrix[matrix_row, "ref.num"] <- "NA"
-        if(is.na(action_matrix[matrix_row, "ref.buch"]))
-          action_matrix[matrix_row, "ref.buch"] <- "NA"
-        if(is.na(action_matrix[matrix_row, "ref.buchbuch"]))
-          action_matrix[matrix_row, "ref.buchbuch"] <- "NA"     
-        if(is.na(action_matrix[matrix_row, "ref.para"]))
-          action_matrix[matrix_row, "ref.para"] <- "NA"     
-        if(is.na(action_matrix[matrix_row, "ref.absatz"]))
-          action_matrix[matrix_row, "ref.absatz"] <- "NA"     
+        if(is.na(action_matrix[matrix_row, "ref.art_rom"]))
+          action_matrix[matrix_row, "ref.art_rom"] <- "NA"
+        if(is.na(action_matrix[matrix_row, "ref.ond"]))
+          action_matrix[matrix_row, "ref.ond"] <- "NA"
+        if(is.na(action_matrix[matrix_row, "ref.punt"]))
+          action_matrix[matrix_row, "ref.punt"] <- "NA"
+        if(is.na(action_matrix[matrix_row, "ref.lid"]))
+          action_matrix[matrix_row, "ref.lid"] <- "NA"     
         
         
         #' -------------------------
@@ -812,17 +720,15 @@ for (row in 1:nrow(amends)) {
         #' -------------------------
         
         # prepare command
-        art_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art"])
+        art_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"])
         art_fehlt_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt")
-        num_string <- str_c("$Nr_", action_matrix[matrix_row, "ref.num"])
-        buch_string <- str_c("$", as.character(action_matrix[matrix_row, "ref.buch"]))
-        buchbuch_string <- str_c("$", action_matrix[matrix_row, "ref.buchbuch"])
-        par_string <- str_c("$`§", action_matrix[matrix_row, "ref.para"], "`")
-        absatz_string <- str_c("$Absatz_", action_matrix[matrix_row, "ref.absatz"])
+        ond_string <- str_c("$Nr_", action_matrix[matrix_row, "ref.ond"])
+        punt_string <- str_c("$", as.character(action_matrix[matrix_row, "ref.punt"]))
+        absatz_string <- str_c("$Absatz_", action_matrix[matrix_row, "ref.lid"])
         
-        ifelse(is.na(action_matrix[matrix_row, "ref.art"]) | action_matrix[matrix_row, "ref.art"] == "NA", 
-               command_prep <- str_c(art_fehlt_string, num_string, buch_string, buchbuch_string, par_string, absatz_string),
-               command_prep <- str_c(art_string, num_string, buch_string, buchbuch_string, par_string, absatz_string)
+        ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]) | action_matrix[matrix_row, "ref.art_rom"] == "NA", 
+               command_prep <- str_c(art_fehlt_string, ond_string, punt_string, absatz_string),
+               command_prep <- str_c(art_string, ond_string, punt_string, absatz_string)
         )
         
         command_prep <- gsub("[$]Nr_NA", "", command_prep)
@@ -866,26 +772,13 @@ for (row in 1:nrow(amends)) {
           # reduce text to vector
           leg_text <- paste(unlist(eval(parse(text=command_prep))), collapse=" ")
           
-          # removing paragraph
-          if(!is.na(action_matrix[matrix_row, "ref.para"]) & is.na(action_matrix[matrix_row, "ref.absatz"])) {
-            
-            ifelse(str_detect(leg_text, str_c(as.numeric(action_matrix[matrix_row, "ref.para"])+1)),
-                   leg_text <- str_remove(leg_text, str_c("[§]", action_matrix[matrix_row, "ref.para"], 
-                                                          ".+[§]", as.numeric(action_matrix[matrix_row, "ref.para"])+1)),
-                   leg_text <- str_remove(leg_text, str_c("[§]", action_matrix[matrix_row, "ref.para"], ".+$"))
-            )
-            
-            command <- str_c(command_prep, " <- ", str_c("'", leg_text, "'"))
-            eval(parse(text=command))   
-          }
-          
           # removing absatz 
-          if(!is.na(action_matrix[matrix_row, "ref.absatz"])) {
+          if(!is.na(action_matrix[matrix_row, "ref.lid"])) {
             
-            ifelse(str_detect(leg_text, str_c("[(]", as.numeric(action_matrix[matrix_row, "ref.absatz"])+1, "[)]")),
-                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.absatz"], "[)]",
-                                                          ".+[()]", as.numeric(action_matrix[matrix_row, "ref.absatz"])+1, "[)]")),
-                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.absatz"], "[)].+$"))
+            ifelse(str_detect(leg_text, str_c("[(]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[)]")),
+                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.lid"], "[)]",
+                                                          ".+[()]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[)]")),
+                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.lid"], "[)].+$"))
             )
             
             command <- str_c(command_prep, " <- ", str_c("'", leg_text, "'"))
@@ -896,19 +789,19 @@ for (row in 1:nrow(amends)) {
           ### if paragraph or absatz should be re-written, add text at end of article
           if (action_matrix[matrix_row, "neufassen"] == "TRUE") {
             
-            if(is.na(action_matrix[matrix_row, "ref.art"])) {
+            if(is.na(action_matrix[matrix_row, "ref.art_rom"])) {
               art.length <- 1
             }
             
-            if(!is.na(action_matrix[matrix_row, "ref.art"])) {
-              ref.art <- as.numeric(action_matrix[matrix_row, "ref.art"])
-              art.length <- length(amends$artikel_list_hypo[[row]][[ref.art]])
+            if(!is.na(action_matrix[matrix_row, "ref.art_rom"])) {
+              ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
+              art.length <- length(amends$artikel_list_hypo[[row]][[ref.art_rom]])
             }
             
-            ifelse(is.na(action_matrix[matrix_row, "ref.art"]), 
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
                    command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
-                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art"],
+                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'") 
             )
             
@@ -937,21 +830,21 @@ for (row in 1:nrow(amends)) {
             text_remove <- action_matrix[matrix_row, "text.spec"]
           
           # execute removal
-          if(action_matrix[matrix_row, "ref.art"] == "NA") {
+          if(action_matrix[matrix_row, "ref.art_rom"] == "NA") {
             element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt), text_remove))[1]
             amends$artikel_list_hypo[row][[1]]$Artikel_fehlt[element] <- 
               str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt)[element], text_remove)     
           }
           
-          if(action_matrix[matrix_row, "ref.art"] != "NA") {
-            ref.art <- as.numeric(action_matrix[matrix_row, "ref.art"])
+          if(action_matrix[matrix_row, "ref.art_rom"] != "NA") {
+            ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
             
             command1 <- str_c("element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_",
-                              ref.art, "), text_remove))[1]")
+                              ref.art_rom, "), text_remove))[1]")
             eval(parse(text=command1))  
             
-            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art, 
-                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art, 
+            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom, 
+                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom, 
                               ")[element], '", text_remove, "')")
             eval(parse(text=command2))  
             
@@ -965,16 +858,16 @@ for (row in 1:nrow(amends)) {
           
           if (action_matrix[matrix_row, "neufassen"] == "TRUE") {
             
-            ifelse(is.na(action_matrix[matrix_row, "ref.art"]), 
-                   ref.art <- 1,
-                   ref.art <- as.numeric(action_matrix[matrix_row, "ref.art"])
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
+                   ref.art_rom <- 1,
+                   ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
             )
-            art.length <- length(amends$artikel_list_hypo[[row]][[ref.art]])
+            art.length <- length(amends$artikel_list_hypo[[row]][[ref.art_rom]])
             
-            ifelse(is.na(action_matrix[matrix_row, "ref.art"]), 
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
                    command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
-                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art"],
+                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'")
             )
             
