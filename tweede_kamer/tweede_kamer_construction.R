@@ -44,7 +44,7 @@ for (row in 1:nrow(amends)) {
 } 
 
 # here: begin for()-loop over all amendments
-for (row in 1:100) {
+for (row in 857:nrow(amends)) {
   # row <- 1
   
   # define objects to work with in specific row
@@ -457,7 +457,7 @@ for (row in 1:100) {
         action_matrix[list_el, "text.cite"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][2]
       }
 
-      amend_list[list_el] <- rm_between(amend_list[list_el], "«", "»")
+      #amend_list[list_el] <- rm_between(amend_list[list_el], "«", "»")
     }
     
     # version 2: text.cite is referenced by "luidende: [...]"
@@ -478,10 +478,16 @@ for (row in 1:100) {
     }
     
     
-    # version 5: two or more words that reference text.cite appear in element
+    # version 5: text.cite is referenced by "ingevoegd: [...]"
+    if(str_detect(amend_list[list_el], "ingevoegd\\:")) {
+      action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=ingevoegd\\:\\s?).*"))
+    }
+    
+    
+    # version 6: two or more words that reference text.cite appear in element
     # if more than word appears, use the first one
     if(lengths(str_extract_all(amend_list[list_el], "luiden\\s?\\:|vervangen\\sdoor\\s?\\:|luidende\\s?\\:")) >= 2){
-      action_matrix[list_el, "text.cite"] <- trimws(str_extract(amend_list[list_el], "(?<=vervangen\\sdoor\\s?\\:\\s?).*|(?<=luiden\\s?\\:\\s?).*|(?<=luidende\\s?\\:\\s?).*"))
+      action_matrix[list_el, "text.cite"] <- trimws(str_extract_all(amend_list[list_el], "(?<=vervangen\\sdoor\\s?\\:\\s?).*|(?<=luiden\\s?\\:\\s?).*|(?<=luidende\\s?\\:\\s?).*"))
     }
        
     
