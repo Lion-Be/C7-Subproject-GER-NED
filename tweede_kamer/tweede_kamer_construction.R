@@ -715,7 +715,7 @@ for (row in 1:100) {
         ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
                command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
                                 "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
-               command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
+               command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$ARTIKEL_", action_matrix[matrix_row, "ref.art_rom"],
                                 "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'") 
         )
         
@@ -745,7 +745,7 @@ for (row in 1:100) {
 
         # prepare command
         art_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$ARTIKEL_", action_matrix[matrix_row, "ref.art_rom"])
-  #w      art_fehlt_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt")
+        art_fehlt_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt")
         #Hoofdstuk
         ond_string <- str_c("$", action_matrix[matrix_row, "ref.ond"])
         punt_string <- str_c("$", as.character(action_matrix[matrix_row, "ref.punt"]))
