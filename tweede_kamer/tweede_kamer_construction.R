@@ -44,7 +44,7 @@ for (row in 1:nrow(amends)) {
 } 
 
 # here: begin for()-loop over all amendments
-for (row in 857:nrow(amends)) {
+for (row in 1:nrow(amends)) {
   # row <- 1
   
   # define objects to work with in specific row
@@ -571,7 +571,7 @@ for (row in 857:nrow(amends)) {
   #action_matrix[,"ref.satz"] <- gsub("(Sätzen|Sätze|Satz)", "", action_matrix[,"ref.satz"])
   #action_matrix[,"ref.satz"] <- gsub(" ", "", action_matrix[,"ref.satz"])
   
-  # replace alphabeticall spelled out numbers ("eerste|twee") with digits
+  # replace alphabetically spelled out numbers ("eerste|twee") with digits
   for (var in c("ref.punt", "ref.lid")) {
     
   action_matrix[, var] <- gsub("eerste", "1", action_matrix[, var])
@@ -650,39 +650,18 @@ for (row in 857:nrow(amends)) {
   
   amends$action_matrix[row] <- list(action_matrix)
 } # end for loop over all amendments 1.2
-file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_post.R") # execute before continuing
+#file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_post.R") # execute before continuing
 
 
 #### current status
-# basically, this is all fine, below are some things that I could still look into
-# implement changes now and see how far I come, rest manually?
+# for most amendments the current code works fine
+# does the code also work if multiple signal words appear in one element?
 
 
-#### das generelle Auslesen der action_matrix-Elemente ist done
-#### filling up action_matrix anders für neu_gesetze? Zur Zeit basiert Logik auf Änderungsgesetzen. 
+# some amends are empty: 803, (852)?, 856, 1290, 1438, 1851, 1973, 2094, 2175, 2773, 2777, 3055
 
-#### nochmal zum reinsehen: 
-#### Änderungen in der Überschrift müssen separat eingearbeitet werden, bspw. 60
-#### bei ref.para ($ 1), ref.absatz (Absatz 1), ref.satz (Satz 1) noch 287 188 ansehen
-#### Die letzte Zeile der action_matrix 92 zeigt mir, wie ich neufassen implementieren muss wenn mehrere Nummern angesprochen werden. In Implementeirung: Ist alle Nummern löschen, dann neuen Text einfügen.
-
-#### dann nach: 
-#### nochmal 30 action_matrices samplen und durchchecken?
-#### mal alle amends$amend_lists anschauen, die length = 1 haben. Manche müssen noch manuell in Listen gesplittet werden
-
-
-#### one thing really needs to change still: sometimes the amendment proposals have quite some whitespace in them
-#### this is a problem when text is cited (!) that should be identified in bills. So in amendment proposals, 
-#### whitespace needs to deleted. In bills, whitespace often needs to be added still. 
-
-### warum wurde die action_matrix von 128 nicht erweitert??????
-
-### zitierter Text muss auch wie folgt erkannt werden: ‘ text ’
-
-#  "Die Nummern 1, 2, 3, 4 und 7" - das muss ausgelesen werden, Zeile 214
-# §§ 53, 85, 95 und 98 muss ausgelesen werden können 404
-
-# nur "a)" muss als Buchstabe ausgelesen werden, siehe 244
+#add artikel_list to df
+legistext_NL$artikel_list <- list_dissected_articles
 
 #' --------------------------
 ## 2 implement changes ------
@@ -692,12 +671,12 @@ amends$artikel_list_hypo <- NA
 
 # here: begin for()-loop over all amendments
 errors <- rep(NA, nrow(amends))
-for (row in 1:nrow(amends)) {
+for (row in 1:100) {
   
   tryCatch({
     action_matrix <- amends$action_matrix[[row]]
-    bills_row <- which(bills$bill_id == amends$bill_reference[row])
-    amends$artikel_list_hypo[row] <- bills$artikel_list[bills_row]
+    bills_row <- which(legistext_NL$Bill_ID == amends$bill_reference[row])
+    amends$artikel_list_hypo[row] <- legistext_NL$artikel_list[bills_row]
   }, error = function(e) { errors[row] <<- str_c("row=", row, " matrix_row=none")}) 
   
   # here: begin for()-loop over rows of action_matrix
@@ -728,8 +707,8 @@ for (row in 1:nrow(amends)) {
         }
         
         if(!is.na(action_matrix[matrix_row, "ref.art_rom"])) {
-          ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
-          length_command <- str_c("art.length <- length(amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"], ")")
+          ref.art_rom <- action_matrix[matrix_row, "ref.art_rom"]
+          length_command <- str_c("art.length <- length(amends$artikel_list_hypo[", row, "][[1]]$ARTIKEL_", action_matrix[matrix_row, "ref.art_rom"], ")")
           eval(parse(text=length_command))
         }
         
@@ -748,8 +727,8 @@ for (row in 1:nrow(amends)) {
       #' ------------------------
       ## 2.2 delete/rewrite  ----
       #' ------------------------
-      if (action_matrix[matrix_row, "loeschen"] == T | action_matrix[matrix_row, "neufassen"] == T) { 
-        
+      if (action_matrix[matrix_row, "loeschen"] == T | action_matrix[matrix_row, "neufassen"] == T) {
+
         if(is.na(action_matrix[matrix_row, "ref.art_rom"]))
           action_matrix[matrix_row, "ref.art_rom"] <- "NA"
         if(is.na(action_matrix[matrix_row, "ref.ond"]))
@@ -757,176 +736,179 @@ for (row in 1:nrow(amends)) {
         if(is.na(action_matrix[matrix_row, "ref.punt"]))
           action_matrix[matrix_row, "ref.punt"] <- "NA"
         if(is.na(action_matrix[matrix_row, "ref.lid"]))
-          action_matrix[matrix_row, "ref.lid"] <- "NA"     
-        
-        
+          action_matrix[matrix_row, "ref.lid"] <- "NA"
+
+
         #' -------------------------
         ## 2.2.1 list elements  ----
         #' -------------------------
-        
+
         # prepare command
-        art_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"])
-        art_fehlt_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt")
-        ond_string <- str_c("$Nr_", action_matrix[matrix_row, "ref.ond"])
+        art_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$ARTIKEL_", action_matrix[matrix_row, "ref.art_rom"])
+  #w      art_fehlt_string <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt")
+        #Hoofdstuk
+        ond_string <- str_c("$", action_matrix[matrix_row, "ref.ond"])
         punt_string <- str_c("$", as.character(action_matrix[matrix_row, "ref.punt"]))
-        absatz_string <- str_c("$Absatz_", action_matrix[matrix_row, "ref.lid"])
-        
-        ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]) | action_matrix[matrix_row, "ref.art_rom"] == "NA", 
-               command_prep <- str_c(art_fehlt_string, ond_string, punt_string, absatz_string),
-               command_prep <- str_c(art_string, ond_string, punt_string, absatz_string)
+        lid_string <- str_c("$lid_", action_matrix[matrix_row, "ref.lid"])
+
+        ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]) | action_matrix[matrix_row, "ref.art_rom"] == "NA",
+               command_prep <- str_c(art_fehlt_string, ond_string, punt_string, lid_string),
+               command_prep <- str_c(art_string, ond_string, punt_string, lid_string)
         )
-        
-        command_prep <- gsub("[$]Nr_NA", "", command_prep)
+
+        #command_prep <- gsub("[$]Nr_NA", "", command_prep)
         command_prep <- gsub("[$]NA", "", command_prep)
-        command_prep <- gsub("[$]`[§]NA`", "", command_prep)
-        command_prep <- gsub("[$]Absatz_NA", "", command_prep)
-        
-        
+        #command_prep <- gsub("[$]`[§]NA`", "", command_prep)
+        command_prep <- gsub("[$]lid_NA", "", command_prep)
+
+
         #' --------------------------------------------------------------------------------------------------
         ## 2.2.1.1 senario 1 - all list elements of the command are also list elements of the bill list  ----
         #' --------------------------------------------------------------------------------------------------
         if(!is.null(eval(parse(text=command_prep))) & is.na(action_matrix[matrix_row, "text.spec"])) {
+
           
+          # onderdeel is the only command that refers to a specific list element
+          # punt and lid refer to parts within list elements; artikel_num is probably not necessary
           # execute command
-          if (is.na(action_matrix[matrix_row, "ref.satz"]) & is.na(action_matrix[matrix_row, "text.spec"]) & action_matrix[matrix_row, "neufassen"] == "TRUE") {
+          if (is.na(action_matrix[matrix_row, "ref.satz"]) & is.na(action_matrix[matrix_row, "ref.punt"]) & is.na(action_matrix[matrix_row, "ref.lid"]) & is.na(action_matrix[matrix_row, "text.spec"]) & action_matrix[matrix_row, "neufassen"] == "TRUE") {
             command <- str_c(command_prep, " <- '", action_matrix[matrix_row, "text.cite"], "'")
-            eval(parse(text=command))  
+            eval(parse(text=command))
           }
-          
-          if (is.na(action_matrix[matrix_row, "ref.satz"]) & is.na(action_matrix[matrix_row, "text.spec"]) & is.na(action_matrix[matrix_row, "text.cite"]) & action_matrix[matrix_row, "loeschen"] == "TRUE") {
+
+          if (is.na(action_matrix[matrix_row, "ref.satz"]) & is.na(action_matrix[matrix_row, "ref.punt"]) & is.na(action_matrix[matrix_row, "ref.lid"]) & is.na(action_matrix[matrix_row, "text.spec"]) & is.na(action_matrix[matrix_row, "text.cite"]) & action_matrix[matrix_row, "loeschen"] == "TRUE") {
             command <- str_c(command_prep, " <- ", "NULL")
-            eval(parse(text=command))  
+            eval(parse(text=command))
           }
-          
+
         }
-        
+
         #' -------------------------------------------------------------------------------------------------------------------------------------
         ## 2.2.1.2 scenario 2 - amendment proposal is referring to element (paragaph or absatz) that is not a list element of the bill list ----
         #' -------------------------------------------------------------------------------------------------------------------------------------
-        
-        
+
+
         if(is.null(eval(parse(text=command_prep))) & ((action_matrix[matrix_row, "neufassen"] == "TRUE" & is.na(action_matrix[matrix_row, "text.spec"]) | (action_matrix[matrix_row, "loeschen"] == "TRUE" & is.na(action_matrix[matrix_row, "text.cite"]))))) {
-          
-          
+
+
           ### delete paragraph or absatz
-          
-          # trim towards structural elements that should work 
-          command_prep <- gsub("[$][§][0-9]+", "", command_prep)
-          command_prep <- gsub("[$]Absatz_[0-9]+", "", command_prep)
-          
+
+          # trim towards structural elements that should work
+          command_prep <- gsub("[$][0-9]+", "", command_prep)
+          command_prep <- gsub("[$]lid_[0-9]+", "", command_prep)
+
           # reduce text to vector
           leg_text <- paste(unlist(eval(parse(text=command_prep))), collapse=" ")
-          
-          # removing absatz 
+
+          # removing absatz
           if(!is.na(action_matrix[matrix_row, "ref.lid"])) {
-            
-            ifelse(str_detect(leg_text, str_c("[(]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[)]")),
-                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.lid"], "[)]",
-                                                          ".+[()]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[)]")),
-                   leg_text <- str_remove(leg_text, str_c("[(]", action_matrix[matrix_row, "ref.lid"], "[)].+$"))
+
+            ifelse(str_detect(leg_text, str_c("[.][:blank:]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[.]")),
+                   leg_text <- str_remove(leg_text, str_c(action_matrix[matrix_row, "ref.lid"], "[.]",
+                                                          ".+(?=", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[.]", ")")),
+                   leg_text <- str_remove(leg_text, str_c(action_matrix[matrix_row, "ref.lid"], "[.].+$"))
             )
-            
+
             command <- str_c(command_prep, " <- ", str_c("'", leg_text, "'"))
-            eval(parse(text=command))   
+            eval(parse(text=command))
           }
-          
-          
+
+
           ### if paragraph or absatz should be re-written, add text at end of article
           if (action_matrix[matrix_row, "neufassen"] == "TRUE") {
-            
+
             if(is.na(action_matrix[matrix_row, "ref.art_rom"])) {
               art.length <- 1
             }
-            
+
             if(!is.na(action_matrix[matrix_row, "ref.art_rom"])) {
-              ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
-              art.length <- length(amends$artikel_list_hypo[[row]][[ref.art_rom]])
+              ref.art_rom <- action_matrix[matrix_row, "ref.art_rom"]
+              art.length <- length(eval(parse(text = str_c("amends$artikel_list_hypo[[", row, "]]$ARTIKEL_", ref.art_rom))))
             }
-            
-            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
+
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]),
                    command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
-                                    "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
-                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
-                                    "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'") 
+                                      "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
+                   command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$ARTIKEL_", action_matrix[matrix_row, "ref.art_rom"],
+                                    "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'")
             )
-            
+
             eval(parse(text=command))
-            
+
           }
-          
-          
-        } # end is.null 
-        
-        
-        
+
+
+        } # end is.null
+
+
+
         #' -------------------------
         ## 2.2.2 specific text  ----
         #' -------------------------
         if ((action_matrix[matrix_row, "neufassen"] == "TRUE" & !is.na(action_matrix[matrix_row, "text.spec"]) | (action_matrix[matrix_row, "loeschen"] == "TRUE" & !is.na(action_matrix[matrix_row, "text.cite"])))) {
-          
-          
+
+
           #' (i) first remove text --------------
-          
+
           # text to be removed
           if(action_matrix[matrix_row, "loeschen"] == T)
             text_remove <- action_matrix[matrix_row, "text.cite"]
-          
+
           if(action_matrix[matrix_row, "neufassen"] == T)
             text_remove <- action_matrix[matrix_row, "text.spec"]
-          
+
           # execute removal
           if(action_matrix[matrix_row, "ref.art_rom"] == "NA") {
             element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt), text_remove))[1]
-            amends$artikel_list_hypo[row][[1]]$Artikel_fehlt[element] <- 
-              str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt)[element], text_remove)     
+            amends$artikel_list_hypo[row][[1]]$Artikel_fehlt[element] <-
+              str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt)[element], text_remove)
           }
-          
+
           if(action_matrix[matrix_row, "ref.art_rom"] != "NA") {
             ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
-            
+
             command1 <- str_c("element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_",
                               ref.art_rom, "), text_remove))[1]")
-            eval(parse(text=command1))  
-            
-            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom, 
-                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom, 
+            eval(parse(text=command1))
+
+            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom,
+                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom,
                               ")[element], '", text_remove, "')")
-            eval(parse(text=command2))  
-            
+            eval(parse(text=command2))
+
             # element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_3), text_remove))[1]
-            # amends$artikel_list_hypo[row][[1]]$Artikel_3[element] <- 
+            # amends$artikel_list_hypo[row][[1]]$Artikel_3[element] <-
             # str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_3)[element], "April2014inKraft")
-            
+
           }
-          
+
           #' (ii) if text is re-written, add new text to end of article ----------------
-          
+
           if (action_matrix[matrix_row, "neufassen"] == "TRUE") {
-            
-            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
+
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]),
                    ref.art_rom <- 1,
                    ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
             )
             art.length <- length(amends$artikel_list_hypo[[row]][[ref.art_rom]])
-            
-            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]), 
+
+            ifelse(is.na(action_matrix[matrix_row, "ref.art_rom"]),
                    command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_fehlt",
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'"),
                    command <- str_c("amends$artikel_list_hypo[", row, "][[1]]$Artikel_", action_matrix[matrix_row, "ref.art_rom"],
                                     "[", art.length+1, "] <- '", action_matrix[matrix_row, "text.cite"], "'")
             )
-            
-            eval(parse(text=command))  
-            
+
+            eval(parse(text=command))
+
           }
-          
+
         } # end of 2.2.2 specific text
-        
-      } # end if deleting/rewriting     
-      
-    }, error = function(e) {
-      
-      errors[row] <<- str_c("row=", row, " matrix_row=", matrix_row)
+
+      } # end if deleting/rewriting
+
+     }, error = function(e) {
+       errors[row] <<- str_c("row=", row, " matrix_row=", matrix_row)
       
     }) # end tryCatch
     
@@ -936,11 +918,12 @@ for (row in 1:nrow(amends)) {
 
 errors <- errors[which(!is.na(errors))]
 
-# STATUS
-# - generell steht der Code
-# - doppelte Leerzeichen in amend_lists und bills löschen 
-# - Bei der Auslesung der Bills Leerzeichen reinkriegen
-# - Auf einem sample checken, wie die Pipeline performt
+# Weird proposals:
+# amends$amend_list[78]: "opschrift von hoodstuk"
+
+
+
+
 
 
 
