@@ -40,10 +40,5 @@ Counterfactual bills are defined as government legislation as it would look like
   <img src="counter2.png" width="450" /> 
 </p>
 
-
-
-
-
-
-
+We can now systematically study opposition behavior in parliament, for instance by comparing government bills to counterfactual bills under opposition preferences. See for instance [our paper here](https://www.journals.uchicago.edu/doi/10.1086/720649) in the *Journal of Politics*. 
 
