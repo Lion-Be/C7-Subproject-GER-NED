@@ -36,8 +36,8 @@ We define the three action functions `hinzufuegen()`, `loeschen()` and `neufasse
 Counterfactual bills are defined as government legislation as it would look like if opposition amendment proposals would have been taken into account. Some exemplary counterfactual bill sections are: 
 
 <p float="left">
-  <img src="counter1.png" width="500" />
-  <img src="counter2.png" width="500" /> 
+  <img src="counter1.png" width="450" />
+  <img src="counter2.png" width="450" /> 
 </p>
 
 
