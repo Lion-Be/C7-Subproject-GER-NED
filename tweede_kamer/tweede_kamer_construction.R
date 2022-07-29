@@ -86,8 +86,7 @@ for (row in 1:nrow(amends)) {
   # een volzin toegevoegd (amend_lists[[25]]) = ein Satz
   # aan het slot een volzin toegevoegd (37) = am Ende ein Satz
   # some amendments seem to be duplicates -> unique()? 
-  # eerste lid in action_matrix = lid 1? 
-  
+
   
   # --------------------------------------------------------
   ## collapse lines and keep label of each list element ----
@@ -143,7 +142,7 @@ for (row in 1:nrow(amends)) {
   ## do we have multiple changes after basic introductory sentence ("gewijzigd")? -> probably not, because action_matrix wouldn't work
   
   amend_text <- unlist(amend_list)
-  action_text <- str_replace(amend_text, "«.*»", "")
+  action_text <- str_replace_all(amend_text, "«([:graph:])*»", "")
   action_text <- str_replace(action_text, "\\bvervangen\\sdoor\\:.*", "vervangen door")
   action_text <- str_replace(action_text, "\\bluidende\\:.*", "luidende")
   action_text <- str_replace(action_text, "\\bte\\sluiden\\:.*", "te luiden")
@@ -424,11 +423,10 @@ for (row in 1:nrow(amends)) {
       action_matrix[list_el,"ref.satz"] <- 
         str_extract(action_text[list_el], "\\bSätze\\s[:digit:]+\\sbis\\s[:digit:]+\\b")
     
+    
   } # end for loop over action text list elements
   
 
-  # does text.spec appear in other forms? 
-  
   #' -------------------------------------------
   ## 1.10 identify text.spec -------------------
   #' -------------------------------------------
@@ -441,6 +439,12 @@ for (row in 1:nrow(amends)) {
     if(lengths(rm_between(amend_list[list_el], "«", "»", extract = T)) == 2)
       action_matrix[list_el, "text.spec"] <- rm_between(amend_list[list_el], "«", "»", extract = T)[[1]][1]
       
+  # remove 
+    if(str_detect(action_text[list_el], "luiden\\:.*«.*»"))
+      action_matrix[list_el, "text.spec"] <- NA
+    
+    if(str_detect(action_text[list_el], "luidende\\:.*«.*»"))
+      action_matrix[list_el, "text.spec"] <- NA
     
   } # end for loop over action text list elements
 
@@ -658,6 +662,9 @@ for (row in 1:nrow(amends)) {
 # does the code also work if multiple signal words appear in one element?
 
 
+# NEEDS FIXING:
+# 
+
 # some amends are empty: 803, (852)?, 856, 1290, 1438, 1851, 1973, 2094, 2175, 2773, 2777, 3055
 
 #add artikel_list to df
@@ -684,11 +691,19 @@ for (row in 1:100) {
     
     tryCatch({
       
+      # make labels of list elements more compatible with function
+      
+      # remove "." out of labels of list elements (example: ...$ARRTIKEL_I.)
+      names(amends$artikel_list_hypo[row][[1]]) <- str_remove(names(amends$artikel_list_hypo[row][[1]]), "\\.")
+                        
+     
+      
+      
       
       #' -----------------------------------------------------------
       ## 2.0 special case: whole bill is re-written  ---------------
       #' -----------------------------------------------------------
-      
+      # ATTENTION: THIS IS STILL CODE FOR GERMAN BUNDESTAG
       if (sum(is.na(action_matrix[matrix_row, 1:6])) == 6 & action_matrix[matrix_row, "neufassen"] == T) {
         amends$artikel_list_hypo[row][[1]] <- action_matrix[matrix_row, "text.cite"]
         next
@@ -841,7 +856,6 @@ for (row in 1:100) {
         } # end is.null
 
 
-
         #' -------------------------
         ## 2.2.2 specific text  ----
         #' -------------------------
@@ -863,18 +877,21 @@ for (row in 1:100) {
             amends$artikel_list_hypo[row][[1]]$Artikel_fehlt[element] <-
               str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_fehlt)[element], text_remove)
           }
-
+    
+          # if ARTIKEL_I$
           if(action_matrix[matrix_row, "ref.art_rom"] != "NA") {
-            ref.art_rom <- as.numeric(action_matrix[matrix_row, "ref.art_rom"])
+            ref.art_rom <- action_matrix[matrix_row, "ref.art_rom"]
 
-            command1 <- str_c("element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_",
+            command1 <- str_c("element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$ARTIKEL_",
                               ref.art_rom, "), text_remove))[1]")
             eval(parse(text=command1))
 
-            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom,
-                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_", ref.art_rom,
+            command2 <- str_c("amends$artikel_list_hypo[row][[1]]$ARTIKEL_", ref.art_rom,
+                              "[element] <- str_remove(unlist(amends$artikel_list_hypo[row][[1]]$ARTIKEL_", ref.art_rom,
                               ")[element], '", text_remove, "')")
             eval(parse(text=command2))
+            
+              
 
             # element <- which(str_detect(unlist(amends$artikel_list_hypo[row][[1]]$Artikel_3), text_remove))[1]
             # amends$artikel_list_hypo[row][[1]]$Artikel_3[element] <-
