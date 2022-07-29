@@ -658,38 +658,8 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
   amends$action_matrix[row] <- list(action_matrix)  
   } # end for loop over all amendments 1.2
   file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_post.R") # execute before continuing
-
-  
-  #### current status
-  # basically, this is all fine, below are some things that I could still look into
-  # implement changes now and see how far I come, rest manually?
   
   
-  #### das generelle Auslesen der action_matrix-Elemente ist done
-  #### filling up action_matrix anders für neu_gesetze? Zur Zeit basiert Logik auf Änderungsgesetzen. 
-  
-  #### nochmal zum reinsehen: 
-  #### Änderungen in der Überschrift müssen separat eingearbeitet werden, bspw. 60
-  #### bei ref.para ($ 1), ref.absatz (Absatz 1), ref.satz (Satz 1) noch 287 188 ansehen
-  #### Die letzte Zeile der action_matrix 92 zeigt mir, wie ich neufassen implementieren muss wenn mehrere Nummern angesprochen werden. In Implementeirung: Ist alle Nummern löschen, dann neuen Text einfügen.
-  
-  #### dann nach: 
-  #### nochmal 30 action_matrices samplen und durchchecken?
-  #### mal alle amends$amend_lists anschauen, die length = 1 haben. Manche müssen noch manuell in Listen gesplittet werden
-  
-  
-  #### one thing really needs to change still: sometimes the amendment proposals have quite some whitespace in them
-  #### this is a problem when text is cited (!) that should be identified in bills. So in amendment proposals, 
-  #### whitespace needs to deleted. In bills, whitespace often needs to be added still. 
-  
-  ### warum wurde die action_matrix von 128 nicht erweitert??????
-  
-  ### zitierter Text muss auch wie folgt erkannt werden: ‘ text ’
-  
-  #  "Die Nummern 1, 2, 3, 4 und 7" - das muss ausgelesen werden, Zeile 214
-  # §§ 53, 85, 95 und 98 muss ausgelesen werden können 404
-  
-  # nur "a)" muss als Buchstabe ausgelesen werden, siehe 244
   
 #' --------------------------
 ## 2 implement changes ------
@@ -962,38 +932,7 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
 
   errors <- errors[which(!is.na(errors))]
   
-  # STATUS
-  # - generell steht der Code
-  # - doppelte Leerzeichen in amend_lists und bills löschen 
-  # - Bei der Auslesung der Bills Leerzeichen reinkriegen
-  # - Auf einem sample checken, wie die Pipeline performt
- 
- 
-  
-  
-  # some amends$idDrucksacheLegis are not found in bills
-  # where are the bills that they refer to?
-  bills_row <- rep(NA, nrow(amends))
-  for (row in 1:nrow(amends)) 
-    if (length(which(bills$Drucksache == amends$idDrucksacheLegis[row])) > 0)
-      bills_row[row] <- which(bills$Drucksache == amends$idDrucksacheLegis[row])
-  which(is.na(bills_row))
-  
-  # some laws are read out incorrectly
-  # e.g. amends_row 3
-  
- 
-
-  
-  # performance anhand eines samples überprüfen
-  sam <- sample(1:nrow(amends), 25)
- 
-  row <- 6
-  amends$amend_list[row]
-  View(amends$action_matrix[row][[1]])
-  
-  
-  
+     
   
 #' -----------------------------------------------------
 ## 3. calculate Levenshtein distance (word level) ------
@@ -1285,9 +1224,6 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
   # 5.3 dependent variables ----
   #' ---------------------------    
   
-    ########## for these amendments, there are no bills
-    ########## check if these are real amendments. if yes, trace bills and include
-    ########## for now just delete
     amends <- amends[-which(!is.element(amends$idDrucksacheLegis, billxparty$Drucksache)),]
    
    
@@ -1339,11 +1275,7 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
       
       }
         
-   ### ich könnte die 0er noch zuordnen
-   ####### irgendwas an cmp-share ändern?
-   
-      
-      
+        
     #' ----------------------------------------------------------------
     # salience attribution of voter base
     # share of supporters that deem field to be most important problem
@@ -1465,7 +1397,6 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
         if(billxparty$party[row]=="Linke" & billxparty$LP[row] == 19 & (billxparty$cap1_code[row] == 13 | billxparty$cap1_code[row] == 7 | billxparty$cap1_code[row] == 5)) billxparty$voter_share12[row] <- 1
         
       }
-
   
   #' -------------------------
   # 5.5 control variables ----
@@ -1612,24 +1543,7 @@ file.edit("U:/SFB 884, C7/C7 Subproject GER NED/bundestag_weird_proposals_pre.R"
     # data4, only gov bills, only amended
     data4 <- data3[-which(data3$worddist_weighted==0),]
     
-    
-  
-  
-  #### missing: other ways to operationalize cmp_share
-        
-        
-        
-  #### maybe first: bei worddist_weighted die 0er und NAs tracen, make sure I have all variables correct
-        ### -> be aware that some of these will be manually coded by HiWis
-  #### alternative measurements für cmp_share und und voter_share generieren
-  #### einen loop schreiben über lauter Modellspezifikationen, inkl. verschiedener 
-        # - x-measurements 
-        # - Kontrollvariablen Transformationen (logs)
-        # - Datensätze (mit 0en, ohne 0en; nur gov-bills vs. alle bills)
-  #### mit expand.grid für jede mögliche Kombination ein Modell schätzen?
-  
-  ## note: cap1_code ändert die Richtung von cmp_share
-  
+     
         
   #' ---------------------------------------------------
   ## 6.1 prepare universe of model specifications ------
