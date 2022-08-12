@@ -14,7 +14,7 @@ library(lme4)      # for multilevel modeling
 library(stargazer) 
 library(MASS)
 library(tikzDevice)
-load("tweede_kamer/data_NED.RData")
+load("full data.RData")
 #file.edit("bundestag_weird_proposals_pre.R") # execute before continuing
 
 #' ---------------------------------
@@ -50,6 +50,10 @@ for (row in 1:nrow(amends)) {
   # define objects to work with in specific row
   amend_list <- amends$amend_list[[row]]
   action_matrix <- amends$action_matrix[[row]]
+  
+  if(is.null(amend_list)) 
+    next # skip if amendment is empty 
+  
   
   # --------------------------------------
   ## 1.2 identify function activation ----
@@ -678,7 +682,7 @@ amends$artikel_list_hypo <- NA
 
 # here: begin for()-loop over all amendments
 errors <- rep(NA, nrow(amends))
-for (row in 1:100) {
+for (row in 1:nrow(amends)) {
   
   tryCatch({
     action_matrix <- amends$action_matrix[[row]]
@@ -736,9 +740,27 @@ for (row in 1:100) {
         
         eval(parse(text=command))
         
-      } # end if
+      } # end if hinzufuegen == T
       
       
+    }, error = function(e) {
+      errors[row] <<- str_c("row=", row, " matrix_row=", matrix_row)
+      
+    }) # end tryCatch
+    
+  } # end for matrix_row loop over action_matrix rows
+  
+} # end for row loop over all amendments 2
+      
+      
+
+
+
+
+# to be done: deleting/rewriting and neufassen
+# --------------------------------------------------------------------------
+
+
       #' ------------------------
       ## 2.2 delete/rewrite  ----
       #' ------------------------
@@ -924,14 +946,7 @@ for (row in 1:100) {
 
       } # end if deleting/rewriting
 
-     }, error = function(e) {
-       errors[row] <<- str_c("row=", row, " matrix_row=", matrix_row)
-      
-    }) # end tryCatch
-    
-  } # end for matrix_row loop over action_matrix rows
-  
-} # end for row loop over all amendments 2
+
 
 errors <- errors[which(!is.na(errors))]
 
