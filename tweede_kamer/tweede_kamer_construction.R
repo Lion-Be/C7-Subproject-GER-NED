@@ -837,7 +837,7 @@ for (row in 1:nrow(amends)) {
           # reduce text to vector
           leg_text <- paste(unlist(eval(parse(text=command_prep))), collapse=" ")
 
-          # removing absatz
+          # removing lid
           if(!is.na(action_matrix[matrix_row, "ref.lid"])) {
 
             ifelse(str_detect(leg_text, str_c("[.][:blank:]", as.numeric(action_matrix[matrix_row, "ref.lid"])+1, "[.]")),
@@ -849,9 +849,22 @@ for (row in 1:nrow(amends)) {
             command <- str_c(command_prep, " <- ", str_c("'", leg_text, "'"))
             eval(parse(text=command))
           }
+          
+          # removing punt 
+          if(!is.na(action_matrix[matrix_row, "ref.punt"])) {
+            
+            ifelse(str_detect(leg_text, str_c("[.][:blank:]", as.numeric(action_matrix[matrix_row, "ref.punt"])+1, "[.]")),
+                   leg_text <- str_remove(leg_text, str_c(action_matrix[matrix_row, "ref.punt"], "[.]",
+                                                          ".+(?=", as.numeric(action_matrix[matrix_row, "ref.punt"])+1, "[.]", ")")),
+                   leg_text <- str_remove(leg_text, str_c(action_matrix[matrix_row, "ref.punt"], "[.].+$"))
+            )
+            
+            command <- str_c(command_prep, " <- ", str_c("'", leg_text, "'"))
+            eval(parse(text=command))
+          }
 
 
-          ### if paragraph or absatz should be re-written, add text at end of article
+          ### if lid or punt should be re-written, add text at end of article
           if (action_matrix[matrix_row, "neufassen"] == "TRUE") {
 
             if(is.na(action_matrix[matrix_row, "ref.art_rom"])) {
@@ -873,6 +886,9 @@ for (row in 1:nrow(amends)) {
             eval(parse(text=command))
 
           }
+          
+          
+          
 
 
         } # end is.null
